@@ -41,7 +41,7 @@ dmtxDecodeCreate(DmtxImage *img, int scale)
 
    dec->edgeMin = DmtxUndefined;
    dec->edgeMax = DmtxUndefined;
-   dec->scanGap = 1;
+   dec->scanGap = 0;
    dec->squareDevn = cos(50 * (M_PI/180));
    dec->sizeIdxExpected = DmtxSymbolShapeAuto;
    dec->edgeThresh = 10;
@@ -137,8 +137,8 @@ dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
    if(dec->squareDevn <= 0.0 || dec->squareDevn >= 1.0)
       return DmtxFail;
 
-   if(dec->scanGap < 1)
-      return DmtxFail;
+   //if(dec->scanGap < 1)
+   //   return DmtxFail;
 
    if(dec->edgeThresh < 1 || dec->edgeThresh > 100)
       return DmtxFail;
