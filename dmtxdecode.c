@@ -340,8 +340,8 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
       return NULL;
 
    if(PopulateArrayFromMatrix(dec, reg, msg) != DmtxPass) {
-      //dmtxMessageDestroy(&msg);
-      //return NULL;
+      dmtxMessageDestroy(&msg);
+      return NULL;
    }
 
    msg->fnc1 = dec->fnc1;
