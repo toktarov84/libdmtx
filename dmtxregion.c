@@ -73,12 +73,12 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
       if(locStatus == DmtxRangeEnd)
          break;
 
-      /* Scan location for presence of valid barcode region */
+      /* Сканируйте местоположение на наличие действительного региона штрих-кода */
       reg = dmtxRegionScanPixel(dec, loc.X, loc.Y);
       if(reg != NULL)
          return reg;
 
-      /* Ran out of time? */
+      /* Не хватило времени? */
       if(timeout != NULL && dmtxTimeExceeded(*timeout))
          break;
    }
