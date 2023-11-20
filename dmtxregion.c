@@ -1403,7 +1403,7 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
 }
 
 /**
- * Новый или старый метод нахождения самой жирной линии??
+ * Метод нахождения самой жирной линии
  *
  */
 static DmtxBestLine
