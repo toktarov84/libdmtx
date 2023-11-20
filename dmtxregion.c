@@ -484,7 +484,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
 
    assert(reg->leftKnown != 0 && reg->bottomKnown != 0);
 
-   /* Build ray representing left edge */
+   /* Построить луч, представляющий левый край */
    rLeft.p.X = (double)reg->leftLoc.X;
    rLeft.p.Y = (double)reg->leftLoc.Y;
    radians = reg->leftAngle * (M_PI/DMTX_HOUGH_RES);
@@ -493,7 +493,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
    rLeft.tMin = 0.0;
    rLeft.tMax = dmtxVector2Norm(&rLeft.v);
 
-   /* Build ray representing bottom edge */
+   /* Построить луч, представляющий нижний край */
    rBottom.p.X = (double)reg->bottomLoc.X;
    rBottom.p.Y = (double)reg->bottomLoc.Y;
    radians = reg->bottomAngle * (M_PI/DMTX_HOUGH_RES);
@@ -502,7 +502,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
    rBottom.tMin = 0.0;
    rBottom.tMax = dmtxVector2Norm(&rBottom.v);
 
-   /* Build ray representing top edge */
+   /* Построить луч, представляющий верхний край */
    if(reg->topKnown != 0) {
       rTop.p.X = (double)reg->topLoc.X;
       rTop.p.Y = (double)reg->topLoc.Y;
@@ -522,7 +522,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
       rTop.tMax = rBottom.tMax;
    }
 
-   /* Build ray representing right edge */
+   /* Построить луч, представляющий правый край */
    if(reg->rightKnown != 0) {
       rRight.p.X = (double)reg->rightLoc.X;
       rRight.p.Y = (double)reg->rightLoc.Y;
