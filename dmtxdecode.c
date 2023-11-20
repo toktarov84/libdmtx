@@ -13,13 +13,13 @@
  * Mike Laughton <mike@dragonflylogic.com>
  *
  * \file dmtxdecode.c
- * \brief Decode regions
+ * \brief Области декодирования
  */
 
 /**
- * \brief  Initialize decode struct with default values
+ * \brief  Инициализировать структуру декодирования значениями по умолчанию
  * \param  img
- * \return Initialized DmtxDecode struct
+ * \return Инициализированная структура DmtxDecode
  */
 
 #include <stdio.h> // for snprintf
@@ -65,7 +65,7 @@ dmtxDecodeCreate(DmtxImage *img, int scale)
 }
 
 /**
- * \brief  Deinitialize decode struct
+ * \brief  Деинициализировать структуру декодирования
  * \param  dec
  * \return void
  */
@@ -86,7 +86,7 @@ dmtxDecodeDestroy(DmtxDecode **dec)
 }
 
 /**
- * \brief  Set decoding behavior property
+ * \brief  Установить свойство поведения декодирования
  * \param  dec
  * \param  prop
  * \param  value
@@ -97,27 +97,27 @@ dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
 {
    switch(prop) {
       case DmtxPropEdgeMin:
-         dec->edgeMin = value;
+         dec->edgeMin = value; /* Минимальный размер кода в пиксилях */
          break;
       case DmtxPropEdgeMax:
-         dec->edgeMax = value;
+         dec->edgeMax = value; /* Максимальный размер кода в пиксилях */
          break;
       case DmtxPropScanGap:
-         dec->scanGap = value; /* XXX Should this be scaled? */
+         dec->scanGap = value; /* XXX Следует ли это масштабировать? */
          break;
       case DmtxPropFnc1:
-         dec->fnc1 = value;
+         dec->fnc1 = value; /* Управляющий символ для GS1 */
          break;
       case DmtxPropSquareDevn:
-         dec->squareDevn = cos(value * (M_PI/180.0));
+         dec->squareDevn = cos(value * (M_PI/180.0));  /* Поворот кода */
          break;
       case DmtxPropSymbolSize:
-         dec->sizeIdxExpected = value;
+         dec->sizeIdxExpected = value; /* форма кода, квадрат или прямоугольник(квадрат это прямогульник) */
          break;
       case DmtxPropEdgeThresh:
-         dec->edgeThresh = value;
+         dec->edgeThresh = value; /* Уровень бинаризации */
          break;
-      /* Min and Max values arrive unscaled */
+      /* Минимальные и максимальные значения поступают без масштабирования */
       case DmtxPropXmin:
          dec->xMin = value / dec->scale;
          break;
@@ -137,8 +137,8 @@ dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
    if(dec->squareDevn <= 0.0 || dec->squareDevn >= 1.0)
       return DmtxFail;
 
-   //if(dec->scanGap < 1)
-   //   return DmtxFail;
+   if(dec->scanGap < 1)
+      return DmtxFail;
 
    if(dec->edgeThresh < 1 || dec->edgeThresh > 100)
       return DmtxFail;
@@ -197,9 +197,9 @@ dmtxDecodeGetProp(DmtxDecode *dec, int prop)
 /**
  * \brief  Returns xxx
  * \param  img
- * \param  Scaled x coordinate
- * \param  Scaled y coordinate
- * \return Scaled pixel offset
+ * \param  Масштабированная координата x
+ * \param  Масштабированная координата y
+ * \return Масштабированное смещение пикселя
  */
 extern unsigned char *
 dmtxDecodeGetCache(DmtxDecode *dec, int x, int y)
@@ -233,7 +233,7 @@ dmtxDecodeGetPixelValue(DmtxDecode *dec, int x, int y, int channel, int *value)
    xUnscaled = x * dec->scale;
    yUnscaled = y * dec->scale;
 
-/* Remove spherical lens distortion */
+/* Устраните искажение сферической линзы */
 /* int width, height;
    double radiusPow2, radiusPow4;
    double factor;
@@ -262,7 +262,7 @@ dmtxDecodeGetPixelValue(DmtxDecode *dec, int x, int y, int channel, int *value)
 }
 
 /**
- * \brief  Fill the region covered by the quadrilateral given by (p0,p1,p2,p3) in the cache.
+ * \brief  Заполните область, охватываемую четырехугольником, заданным (p0,p1,p2,p3) в кэше.
  */
 static void
 CacheFillQuad(DmtxDecode *dec, DmtxPixelLoc p0, DmtxPixelLoc p1, DmtxPixelLoc p2, DmtxPixelLoc p3)
@@ -321,11 +321,11 @@ CacheFillQuad(DmtxDecode *dec, DmtxPixelLoc p0, DmtxPixelLoc p1, DmtxPixelLoc p2
 }
 
 /**
- * \brief  Convert fitted Data Matrix region into a decoded message
+ * \brief  Преобразовать подобранную область матрицы данных в декодированное сообщение
  * \param  dec
  * \param  reg
  * \param  fix
- * \return Decoded message
+ * \return Декодированное сообщение
  */
 extern DmtxMessage *
 dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
@@ -369,21 +369,21 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 }
 
 /**
- * \brief  Ripped out a part of dmtxDecodeMatrixRegion function to this one to parse own array
+ * \brief  Вырвал часть функции dmtxDecodeMatrixRegion из этой, чтобы разобрать собственный массив
  * \param  sizeIdx
  * \param  msg
  * \param  fix
- * \return Decoded message (msg pointer) or NULL in case of failure.
- * \note You should reaffect msg with the result of this call
- *       since a NULL result means msg gets freed and should not be used anymore.
+ * \return Декодированное сообщение (указатель msg) или NULL в случае сбоя.
+ * \note Вы должны повторно отправить сообщение с результатом этого вызова
+ *       поскольку нулевой результат означает, что msg освобождается и больше не должен использоваться.
  *       ex: msg = dmtxDecodePopulatedArray(sizeidx, msg, fix);
  */
 DmtxMessage *
 dmtxDecodePopulatedArray(int sizeIdx, DmtxMessage *msg, int fix)
 {
    /*
-    * Example msg->array indices for a 12x12 datamatrix.
-    *  also, the 'L' color (usually black) is defined as 'DmtxModuleOnRGB'
+    * Пример msg->array индексы для матрицы данных размером 12x12.
+    *  также, цвет 'L'(обычно черный) определяется как 'DmtxModuleOnRGB'
     *
     * XX    XX    XX    XX    XX    XX   
     * XX 0   1  2  3  4  5  6  7  8  9 XX 
@@ -418,11 +418,11 @@ dmtxDecodePopulatedArray(int sizeIdx, DmtxMessage *msg, int fix)
 }
 
 /**
- * \brief  Convert fitted Data Mosaic region into a decoded message
+ * \brief  Преобразуйте подобранную область мозаики данных в декодированное сообщение
  * \param  dec
  * \param  reg
  * \param  fix
- * \return Decoded message
+ * \return Декодированное сообщение
  */
 extern DmtxMessage *
 dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
@@ -434,25 +434,25 @@ dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
    colorPlane = reg->flowBegin.plane;
 
    /**
-    * Consider performing a color cube fit here to identify exact RGB of
-    * all 6 "cube-like" corners based on pixels located within region. Then
-    * force each sample pixel to the "cube-like" corner based o which one
-    * is nearest "sqrt(dr^2+dg^2+db^2)" (except sqrt is unnecessary).
+    * Рассмотрите возможность выполнения подгонки цветового куба здесь, чтобы точно определить цветовую гамму
+    * все 6 "кубоподобных" углов основаны на пикселях, расположенных внутри области. Затем
+    * принудительно расположите каждый пиксель выборки в "кубоподобном" углу, основываясь на том, какой из них
+    * находится ближе всего "sqrt(dr^2+dg^2+db^2)" (за исключением того, что sqrt не нужен).
     * colorPlane = reg->flowBegin.plane;
     *
-    * To find RGB values of primary colors, perform something like a
-    * histogram except instead of going from black to color N, go from
-    * (127,127,127) to color. Use color bins along with distance to
-    * identify value. An additional method will be required to get actual
-    * RGB instead of just a plane in 3D. */
+    * Чтобы найти значения RGB для основных цветов, выполните что-то вроде
+    * гистограмма, за исключением того, что вместо перехода от черного к цвету N, перейдите от
+    * (127,127,127) для раскрашивания. Используйте цветовые ячейки вместе с расстоянием до
+    * определить значение. Для получения фактического значения потребуется дополнительный метод
+    * RGB вместо простой плоскости в 3D. */
 
-   reg->flowBegin.plane = 0; /* kind of a hack */
+   reg->flowBegin.plane = 0; /* что-то вроде взлома */
    rMsg = dmtxDecodeMatrixRegion(dec, reg, fix);
 
-   reg->flowBegin.plane = 1; /* kind of a hack */
+   reg->flowBegin.plane = 1; /* что-то вроде взлома */
    gMsg = dmtxDecodeMatrixRegion(dec, reg, fix);
 
-   reg->flowBegin.plane = 2; /* kind of a hack */
+   reg->flowBegin.plane = 2; /* что-то вроде взлома */
    bMsg = dmtxDecodeMatrixRegion(dec, reg, fix);
 
    reg->flowBegin.plane = colorPlane;
@@ -569,7 +569,7 @@ dmtxDecodeCreateDiagnostic(DmtxDecode *dec, int *totalBytes, int *headerBytes, i
 }
 
 /**
- * \brief  Increment counters used to determine module values
+ * \brief  Счетчики приращений, используемые для определения значений модуля
  * \param  img
  * \param  reg
  * \param  tally
@@ -600,8 +600,8 @@ TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin,
 
    travelStep = (dir == DmtxDirUp || dir == DmtxDirRight) ? 1 : -1;
 
-   /* Abstract row and column progress using pointers to allow grid
-      traversal in all 4 directions using same logic */
+   /* Абстрактный прогресс строк и столбцов с использованием указателей для разрешения сетки
+      обход во всех 4 направлениях с использованием одной и той же логики */
 
    if((dir & DmtxDirHorizontal) != 0x00) {
       line = &symbolRow;
@@ -631,8 +631,8 @@ TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin,
 
    for(*line = lineStart; *line < lineStop; (*line)++) {
 
-      /* Capture tModule for each leading border module as normal but
-         decide status based on predictable barcode border pattern */
+      /* Модуль захвата для каждого ведущего пограничного модуля в обычном режиме, но
+         определите статус на основе предсказуемого рисунка границы штрих-кода */
 
 
 
@@ -649,8 +649,8 @@ TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin,
          tPrev = tModule;
          statusPrev = statusModule;
 
-         /* For normal data-bearing modules capture color and decide
-            module status based on comparison to previous "known" module */
+         /* Для обычных модулей, несущих данные, фиксируйте цвет и принимайте решение
+            статус модуля, основанный на сравнении с предыдущим "известным" модулем */
 
          color = ReadModuleColor(dec, reg, symbolRow, symbolCol, reg->sizeIdx, reg->flowBegin.plane);
          tModule = (darkOnLight) ? reg->offColor - color : color - reg->offColor;
@@ -686,7 +686,7 @@ TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin,
 }
 
 /**
- * \brief  Populate array with codeword values based on module colors
+ * \brief  Заполнить массив значениями кодовых слов на основе цветов модуля
  * \param  msg
  * \param  img
  * \param  reg
@@ -703,15 +703,15 @@ PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg)
    int xOrigin, yOrigin;
    int mapCol, mapRow;
    int colTmp, rowTmp, idx;
-   int tally[24][24]; /* Large enough to map largest single region */
+   int tally[24][24]; /* Достаточно большой, чтобы нанести на карту самый большой отдельный регион */
 
 /* memset(msg->array, 0x00, msg->arraySize); */
 
-   /* Capture number of regions present in barcode */
+   /* Фиксируйте количество областей, присутствующих в штрих-коде */
    xRegionTotal = dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx);
    yRegionTotal = dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx);
 
-   /* Capture region dimensions (not including border modules) */
+   /* Размеры области захвата (не включая пограничные модули) */
    mapWidth = dmtxGetSymbolAttribute(DmtxSymAttribDataRegionCols, reg->sizeIdx);
    mapHeight = dmtxGetSymbolAttribute(DmtxSymAttribDataRegionRows, reg->sizeIdx);
 
@@ -739,15 +739,15 @@ PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg)
    //dmtxMatrix3Print(reg->fit2raw);
    
 
-   /* Tally module changes for each region in each direction */
+   /* Модуль подсчета изменяется для каждого региона в каждом направлении */
    for(yRegionCount = 0; yRegionCount < yRegionTotal; yRegionCount++) {
 
-      /* Y location of mapping region origin in symbol coordinates */
+      /* Y местоположение начала координат области отображения в символьных координатах */
       yOrigin = yRegionCount * (mapHeight + 2) + 1;
 
       for(xRegionCount = 0; xRegionCount < xRegionTotal; xRegionCount++) {
 
-         /* X location of mapping region origin in symbol coordinates */
+         /* X местоположение начала координат области отображения в символьных координатах */
          xOrigin = xRegionCount * (mapWidth + 2) + 1;
          //fprintf(stdout, "libdmtx::PopulateArrayFromMatrix::xOrigin: %d\n", xOrigin);
 
@@ -757,7 +757,7 @@ PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg)
          TallyModuleJumps(dec, reg, tally, xOrigin, yOrigin, mapWidth, mapHeight, DmtxDirDown);
          TallyModuleJumps(dec, reg, tally, xOrigin, yOrigin, mapWidth, mapHeight, DmtxDirRight);
 
-         /* Decide module status based on final tallies */
+         /* Определите статус модуля на основе окончательных результатов */
          for(mapRow = 0; mapRow < mapHeight; mapRow++) {
          //for(mapRow = mapHeight-1; mapRow >= 0; mapRow--) {
             for(mapCol = 0; mapCol < mapWidth; mapCol++) {
