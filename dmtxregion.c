@@ -15,10 +15,6 @@
  * \brief Обнаружение областей штрих-кода
  */
 
-#include <android/log.h>
-#define  LOG_TAG    "LOG"
-#define LOG(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-
 #define DMTX_HOUGH_RES 180
 
 /**
@@ -175,8 +171,6 @@ MatrixRegionSeekEdge(DmtxDecode *dec, DmtxPixelLoc loc)
 
    if(flowPlane[strongIdx].mag < 1)
       return dmtxBlankEdge;
-   else
-      LOG(flowPlane[strongIdx].mag);
 
    flow = flowPlane[strongIdx];
 
