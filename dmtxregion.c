@@ -390,12 +390,12 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
          p10.X < 0.0 || p10.Y < 0.0 || p10.X > xMax || p10.Y > yMax)
       return DmtxFail;
 
-   dimOT = dmtxVector2Mag(dmtxVector2Sub(&vOT, &p01, &p00)); /* XXX could use MagSquared() */
+   dimOT = dmtxVector2Mag(dmtxVector2Sub(&vOT, &p01, &p00)); /* XXX мог бы использовать MagSquared() */
    dimOR = dmtxVector2Mag(dmtxVector2Sub(&vOR, &p10, &p00));
    dimTX = dmtxVector2Mag(dmtxVector2Sub(&vTX, &p11, &p01));
    dimRX = dmtxVector2Mag(dmtxVector2Sub(&vRX, &p11, &p10));
 
-   /* Verify that sides are reasonably long */
+   /* Убедитесь, что боковые стороны достаточно длинные */
    if(dimOT <= 8.0 || dimOR <= 8.0 || dimTX <= 8.0 || dimRX <= 8.0)
       return DmtxFail;
 
