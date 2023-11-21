@@ -15,10 +15,6 @@
  * \brief Main libdmtx header
  */
 
-#include <android/log.h>
-#define  LOG_TAG    "LOG"
-#define LOG(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-
 #ifndef __DMTX_H__
 #define __DMTX_H__
 
