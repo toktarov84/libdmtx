@@ -1098,12 +1098,12 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
                boundMax.Y - boundMin.Y > maxDiagonal))
             break;
 
-         /* Find the strongest eligible neighbor */
+         /* Найдите самого сильного подходящего соседа */
          flowNext = FindStrongestNeighbor(dec, flow, sign);
-         if(flowNext.mag < 5)
+         if(flowNext.mag < 50)
             break;
 
-         /* Get the neighbor's cache location */
+         /* Получить местоположение кэша соседа */
          cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
          if(cacheNext == NULL)
             break;
@@ -1206,7 +1206,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
          err = BresLineGetStep(line, flowNext.loc, &travel, &outward);
          if (err == DmtxFail) { return DmtxFail; }
 
-         if(flowNext.mag < 5 || outward < 0 || (outward == 0 && travel < 0)) {
+         if(flowNext.mag < 50 || outward < 0 || (outward == 0 && travel < 0)) {
             onEdge = DmtxFalse;
          }
          else {
