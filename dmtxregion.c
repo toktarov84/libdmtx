@@ -67,6 +67,8 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
    DmtxPixelLoc loc;
    DmtxRegion   *reg;
 
+   LOG("HELLO WORLD");
+   
    /* Продолжать, пока мы не найдем нужный регион или пока у нас не кончатся шансы */
    for(;;) {
       locStatus = PopGridLocation(&(dec->grid), &loc);
