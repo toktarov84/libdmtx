@@ -112,7 +112,7 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
 
    /* Проверьте наличие любой разумной границы в этом месте */
    flowBegin = MatrixRegionSeekEdge(dec, loc);
-   if(flowBegin.mag < (int)(dec->edgeThresh * 7.65 + 0.5))
+   if(flowBegin.mag < 1 /*(int)(dec->edgeThresh * 7.65 + 0.5)*/)
       return NULL;
 
    memset(&reg, 0x00, sizeof(DmtxRegion));
@@ -251,7 +251,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    }
 
    line1x = FindBestSolidLine(dec, reg, 0, 0, +1, DmtxUndefined);
-   if(line1x.mag < 5) {
+   if(line1x.mag < 1) {
       TrailClear(dec, reg, 0x40);
       return DmtxFail;
    }
@@ -1655,7 +1655,7 @@ MatrixRegionAlignCalibEdge(DmtxDecode *dec, DmtxRegion *reg, int edgeLoc)
    steps = TrailBlazeGapped(dec, reg, line, streamDir);
 
    bestLine = FindBestSolidLine2(dec, loc0, steps, streamDir, avoidAngle);
-   if(bestLine.mag < 5) {
+   if(bestLine.mag < 1) {
       ;
    }
 
