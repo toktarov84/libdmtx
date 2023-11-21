@@ -853,7 +853,7 @@ GetPointFlow(DmtxDecode *dec, int colorPlane, DmtxPixelLoc loc, int arrive)
    compassMax = 0;
    for(compass = 0; compass < 4; compass++) {
 
-      /* Add portion from each position in the convolution matrix pattern */
+      /* Добавьте часть из каждой позиции в шаблоне матрицы свертки */
       for(patternIdx = 0; patternIdx < 8; patternIdx++) {
 
          coefficientIdx = (patternIdx - compass + 8) % 8;
@@ -865,13 +865,13 @@ GetPointFlow(DmtxDecode *dec, int colorPlane, DmtxPixelLoc loc, int arrive)
          switch(coefficient[coefficientIdx]) {
             case 2:
                mag[compass] += color;
-               /* Fall through */
+               /* Провалиться сквозь */
             case 1:
                mag[compass] += color;
                break;
             case -2:
                mag[compass] -= color;
-               /* Fall through */
+               /* Провалиться сквозь */
             case -1:
                mag[compass] -= color;
                break;
