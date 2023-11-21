@@ -169,7 +169,7 @@ MatrixRegionSeekEdge(DmtxDecode *dec, DmtxPixelLoc loc)
          strongIdx = i;
    }
 
-   if(flowPlane[strongIdx].mag < 5)
+   if(flowPlane[strongIdx].mag < 1)
       return dmtxBlankEdge;
 
    flow = flowPlane[strongIdx];
