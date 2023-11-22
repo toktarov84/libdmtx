@@ -235,11 +235,11 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    }
 
    /* Следуйте до конца в обоих направлениях */
-   err = TrailBlazeContinuous(dec, reg, begin, maxDiagonal);
-   if(err == DmtxFail || reg->stepsTotal < 40) {
-      TrailClear(dec, reg, 0x40);
-      return DmtxFail;
-   }
+   //err = TrailBlazeContinuous(dec, reg, begin, maxDiagonal);
+   //if(err == DmtxFail || reg->stepsTotal < 40) {
+   //   TrailClear(dec, reg, 0x40);
+   //   return DmtxFail;
+   //}
 
    /* Отфильтруйте регионы-кандидаты, которые меньше, чем ожидалось */
    if(dec->edgeMin != DmtxUndefined) {
