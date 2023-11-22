@@ -103,7 +103,7 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    loc.X = x;
    loc.Y = y;
 
-   // Кеширует текущую точку для последующего использования
+   // Кэширует текущую точку для последующего использования
    cache = dmtxDecodeGetCache(dec, loc.X, loc.Y);
    if(cache == NULL)
       return NULL;
