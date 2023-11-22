@@ -121,12 +121,12 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    /* Определение ориентации штрих-кода */
    if(MatrixRegionOrientation(dec, &reg, flowBegin) == DmtxFail)
       return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
-      return NULL;
+   //if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
+   //   return NULL;
 
    /**
-    * Без MatrixRegionAlignCalibEdge и dmtxRegionUpdateXfrmsне падает, коды распознаёт,
-    * Не замечено лучшее распознавание регионов
+    * Без MatrixRegionAlignCalibEdge и dmtxRegionUpdateXfrmsне падает,
+    * коды распознаёт, не замечено лучшее нахождение регионов.
     */
    
    /* Определите верхний край */
