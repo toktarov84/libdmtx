@@ -270,10 +270,10 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    assert(line1x.stepPos >= line1x.stepNeg);
 
    fTmp = FollowSeek(dec, reg, line1x.stepPos + 5);
-   line2p = FindBestSolidLine(dec, reg, /* fTmp.step */ 0, /* line1x.stepNeg */ 0, +1, line1x.angle);
+   line2p = FindBestSolidLine(dec, reg, fTmp.step, line1x.stepNeg, +1, line1x.angle);
 
    fTmp = FollowSeek(dec, reg, line1x.stepNeg - 5);
-   line2n = FindBestSolidLine(dec, reg, /* fTmp.step */ 0, /* line1x.stepPos */ 0, -1, line1x.angle);
+   line2n = FindBestSolidLine(dec, reg, fTmp.step, line1x.stepPos, -1, line1x.angle);
    if(max(line2p.mag, line2n.mag) < 5)
       return DmtxFail;
 
