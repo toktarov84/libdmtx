@@ -124,17 +124,22 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
+   /**
+    * Без MatrixRegionAlignCalibEdge и dmtxRegionUpdateXfrmsне падает, коды распознаёт,
+    * Не замечено лучшее распознавание регионов
+    */
+   
    /* Определите верхний край */
-   // if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
-   //   return NULL;
-   // if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
-   //   return NULL;
+   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
+      return NULL;
+   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
+      return NULL;
 
    /* Определите правый край */
-   // if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
-   //   return NULL;
-   // if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
-   //   return NULL;
+   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
+      return NULL;
+   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
+      return NULL;
 
    CALLBACK_MATRIX(&reg);
 
