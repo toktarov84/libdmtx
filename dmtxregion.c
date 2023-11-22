@@ -125,16 +125,16 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
       return NULL;
 
    /* Определите верхний край */
-   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
-      return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
-      return NULL;
+   // if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
+   //   return NULL;
+   // if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
+   //   return NULL;
 
    /* Определите правый край */
-   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
-      return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
-      return NULL;
+   // if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
+   //   return NULL;
+   // if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
+   //   return NULL;
 
    CALLBACK_MATRIX(&reg);
 
