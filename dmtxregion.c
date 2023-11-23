@@ -1088,7 +1088,7 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
    cacheBeg = dmtxDecodeGetCache(dec, flowBegin.loc.X, flowBegin.loc.Y);
    if(cacheBeg == NULL)
       return DmtxFail;
-   *cacheBeg = (0x80 | 0x40); /* Mark location as visited and assigned */
+   *cacheBeg = (0x80 | 0x40); /* Отметьте местоположение как посещенное и назначенное */
 
    reg->flowBegin = flowBegin;
 
