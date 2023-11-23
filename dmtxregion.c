@@ -256,7 +256,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
       }
    }
 
-   line1x = FindBestSolidLine(dec, reg, 0, 0, +1, DmtxUndefined);
+   line1x = FindBestSolidLine(dec, reg, 0, 5, +1, DmtxUndefined);
    if(line1x.mag < 5) {
       TrailClear(dec, reg, 0x40);
       return DmtxFail;
