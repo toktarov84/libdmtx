@@ -1157,11 +1157,11 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
    reg->boundMin = boundMin;
    reg->boundMax = boundMax;
 
-   /* Clear "visited" bit from trail */
+   /* Очистить "посещенный" фрагмент от следа */
    clears = TrailClear(dec, reg, 0x80);
    assert(posAssigns + negAssigns == clears - 1);
 
-   /* XXX clean this up ... redundant test above */
+   /* XXX приберись здесь ... избыточный тест, приведенный выше */
    if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
          boundMax.Y - boundMin.Y > maxDiagonal))
       return DmtxFail;
