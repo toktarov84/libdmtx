@@ -323,7 +323,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
       cross = ((line1x.locNeg.X - line1x.locPos.X) * (line2x.locNeg.Y - line2x.locPos.Y)) -
             ((line1x.locNeg.Y - line1x.locPos.Y) * (line2x.locNeg.X - line2x.locPos.X));
       if(cross > 0) {
-         /* Condition 1 */
+         /* Состояние 1 */
          reg->polarity = -1;
          reg->locR = line2x.locNeg;
          reg->stepR = line2x.stepNeg;
