@@ -263,7 +263,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    }
 
    err = FindTravelLimits(dec, reg, &line1x);
-   if(line1x.distSq < 10 || line1x.devn * 10 >= sqrt((double)line1x.distSq)) {
+   if(line1x.distSq < 100 || line1x.devn * 10 >= /* sqrt((double)line1x.distSq) */ 0.1) {
       TrailClear(dec, reg, 0x40);
       return DmtxFail;
    }
@@ -280,7 +280,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    if(line2p.mag > line2n.mag) {
       line2x = line2p;
       err = FindTravelLimits(dec, reg, &line2x);
-      if(line2x.distSq < 10 || line2x.devn * 10 >= sqrt((double)line2x.distSq))
+      if(line2x.distSq < 100 || line2x.devn * 10 >= /* sqrt((double)line2x.distSq) */ 0.1)
          return DmtxFail;
 
       cross = ((line1x.locPos.X - line1x.locNeg.X) * (line2x.locPos.Y - line2x.locNeg.Y)) -
@@ -317,7 +317,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    else {
       line2x = line2n;
       err = FindTravelLimits(dec, reg, &line2x);
-      if(line2x.distSq < 10 || line2x.devn / sqrt((double)line2x.distSq) >= 0.1)
+      if(line2x.distSq < 100 || line2x.devn / sqrt((double)line2x.distSq) >= 0.1)
          return DmtxFail;
 
       cross = ((line1x.locNeg.X - line1x.locPos.X) * (line2x.locNeg.Y - line2x.locPos.Y)) -
