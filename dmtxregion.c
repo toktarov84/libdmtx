@@ -1069,10 +1069,10 @@ FollowStep2(DmtxDecode *dec, DmtxFollow followBeg, int sign)
 /**
  * vaiiiooo
  * --------
- * 0x80 v = visited bit
- * 0x40 a = assigned bit
- * 0x38 u = 3 bits points upstream 0-7
- * 0x07 d = 3 bits points downstream 0-7
+ * 0x80 v = посещенный бит
+ * 0x40 a = назначенный бит
+ * 0x38 u = 3 биты указывают вверх по потоку 0-7
+ * 0x07 d = 3 биты указывают вниз по потоку 0-7
  */
 static DmtxPassFail
 TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, int maxDiagonal)
