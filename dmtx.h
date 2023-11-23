@@ -360,34 +360,34 @@ typedef struct DmtxRegion_struct {
    DmtxPixelLoc    locR;          /* remove if stepR works above */
    DmtxPixelLoc    locT;          /* remove if stepT works above */
 
-   /* Region fitting values */
+   /* Значения соответствующие региону */
    int             leftKnown;     /* known == 1; unknown == 0 */
-   int             leftAngle;     /* hough angle of left edge */
-   DmtxPixelLoc    leftLoc;       /* known (arbitrary) location on left edge */
+   int             leftAngle;     /* угол наклона левого края */
+   DmtxPixelLoc    leftLoc;       /* известное (произвольное) местоположение на левом краю */
    DmtxBestLine    leftLine;      /* */
    int             bottomKnown;   /* known == 1; unknown == 0 */
-   int             bottomAngle;   /* hough angle of bottom edge */
-   DmtxPixelLoc    bottomLoc;     /* known (arbitrary) location on bottom edge */
+   int             bottomAngle;   /* угол наклона нижней края */
+   DmtxPixelLoc    bottomLoc;     /* известное (произвольное) местоположение на нижнем краю */
    DmtxBestLine    bottomLine;    /* */
    int             topKnown;      /* known == 1; unknown == 0 */
-   int             topAngle;      /* hough angle of top edge */
-   DmtxPixelLoc    topLoc;        /* known (arbitrary) location on top edge */
+   int             topAngle;      /* угол наклона верхнего края */
+   DmtxPixelLoc    topLoc;        /* известное (произвольное) местоположение на верхнем краю */
    int             rightKnown;    /* known == 1; unknown == 0 */
-   int             rightAngle;    /* hough angle of right edge */
-   DmtxPixelLoc    rightLoc;      /* known (arbitrary) location on right edge */
+   int             rightAngle;    /* угол наклона правого края */
+   DmtxPixelLoc    rightLoc;      /* известное (произвольное) местоположение на правом краю */
 
-   /* Region calibration values */
+   /* Калибровочные значения региона */
    int             onColor;       /* */
    int             offColor;      /* */
-   int             sizeIdx;       /* Index of arrays that store Data Matrix constants */
-   int             symbolRows;    /* Number of total rows in symbol including alignment patterns */
-   int             symbolCols;    /* Number of total columns in symbol including alignment patterns */
-   int             mappingRows;   /* Number of data rows in symbol */
-   int             mappingCols;   /* Number of data columns in symbol */
+   int             sizeIdx;       /* Индекс массивов, хранящих константы Data Matrix */
+   int             symbolRows;    /* Общее количество строк в символе, включая шаблоны выравнивания */
+   int             symbolCols;    /* Общее количество столбцов в символе, включая шаблоны выравнивания */
+   int             mappingRows;   /* Количество строк данных в символе */
+   int             mappingCols;   /* Количество столбцов данных в символе */
 
    /* Transform values */
-   DmtxMatrix3     raw2fit;       /* 3x3 transformation from raw image to fitted barcode grid */
-   DmtxMatrix3     fit2raw;       /* 3x3 transformation from fitted barcode grid to raw image */
+   DmtxMatrix3     raw2fit;       /* 3x3 преобразование необработанного изображения в подогнанную сетку штрих-кодов */
+   DmtxMatrix3     fit2raw;       /* 3x3 преобразование из подогнанной сетки штрих-кодов в необработанное изображение */
 } DmtxRegion;
 
 /**
@@ -396,14 +396,14 @@ typedef struct DmtxRegion_struct {
  */
 typedef struct DmtxMessage_struct {
    size_t          arraySize;     /* mappingRows * mappingCols */
-   size_t          codeSize;      /* Size of encoded data (data words + error words) */
-   size_t          outputSize;    /* Size of buffer used to hold decoded data */
-   int             outputIdx;     /* Internal index used to store output progress */
+   size_t          codeSize;      /* Размер закодированных данных (слова данных + слова ошибок) */
+   size_t          outputSize;    /* Размер буфера, используемого для хранения декодированных данных */
+   int             outputIdx;     /* Внутренний индекс, используемый для хранения хода выполнения вывода */
    int             padCount;
-   int             fnc1;          /* Character to represent FNC1, or DmtxUndefined */
-   unsigned char  *array;         /* Pointer to internal representation of Data Matrix modules */
-   unsigned char  *code;          /* Pointer to internal storage of code words (data and error) */
-   unsigned char  *output;        /* Pointer to internal storage of decoded output */
+   int             fnc1;          /* Символ для представления FNC1 или DmtxUndefined */
+   unsigned char  *array;         /* Указатель на внутреннее представление модулей матрицы данных */
+   unsigned char  *code;          /* Указатель на внутреннее хранилище кодовых слов (данных и ошибок) */
+   unsigned char  *output;        /* Указатель на внутреннее хранилище декодированных выходных данных */
 } DmtxMessage;
 
 /**
@@ -412,26 +412,26 @@ typedef struct DmtxMessage_struct {
  */
 typedef struct DmtxScanGrid_struct {
    /* set once */
-   int             minExtent;     /* Smallest cross size used in scan */
-   int             maxExtent;     /* Size of bounding grid region (2^N - 1) */
-   int             xOffset;       /* Offset to obtain image X coordinate */
-   int             yOffset;       /* Offset to obtain image Y coordinate */
-   int             xMin;          /* Minimum X in image coordinate system */
-   int             xMax;          /* Maximum X in image coordinate system */
-   int             yMin;          /* Minimum Y in image coordinate system */
-   int             yMax;          /* Maximum Y in image coordinate system */
+   int             minExtent;     /* Наименьший размер поперечного сечения, используемый при сканировании */
+   int             maxExtent;     /* Размер области ограничивающей сетки (2^N - 1) */
+   int             xOffset;       /* Смещение для получения координаты X изображения */
+   int             yOffset;       /* Смещение для получения координаты Y изображения */
+   int             xMin;          /* Минимальный X в системе координат изображения */
+   int             xMax;          /* Максимальный X в системе координат изображения */
+   int             yMin;          /* Минимальный Y в системе координат изображения */
+   int             yMax;          /* Максимум Y в системе координат изображения */
 
-   /* reset for each level */
-   int             total;         /* Total number of crosses at this size */
-   int             extent;        /* Length/width of cross in pixels */
-   int             jumpSize;      /* Distance in pixels between cross centers */
-   int             pixelTotal;    /* Total pixel count within an individual cross path */
-   int             startPos;      /* X and Y coordinate of first cross center in pattern */
+   /* сброс для каждого уровня */
+   int             total;         /* Общее количество крестов(пересечений?) такого размера */
+   int             extent;        /* Длина/ширина креста(пересечения?) в пикселях */
+   int             jumpSize;      /* Расстояние в пикселях между центрами пересечения */
+   int             pixelTotal;    /*Общее количество пикселей в пределах отдельного поперечного контура */
+   int             startPos;      /* Координаты X и Y первого центра пересечения в шаблоне */
 
-   /* reset for each cross */
-   int             pixelCount;    /* Progress (pixel count) within current cross pattern */
-   int             xCenter;       /* X center of current cross pattern */
-   int             yCenter;       /* Y center of current cross pattern */
+   /* сброс для каждого пересечения */
+   int             pixelCount;    /* Прогресс (количество пикселей) в текущем перекрестном узоре */
+   int             xCenter;       /* X центр текущего перекрестного рисунка */
+   int             yCenter;       /* Y центр текущего перекрестного рисунка */
 } DmtxScanGrid;
 
 /**
@@ -497,17 +497,17 @@ typedef struct DmtxEncode_struct {
  * @brief DmtxChannel
  */
 typedef struct DmtxChannel_struct {
-   int             encScheme;     /* current encodation scheme */
-   int             invalid;       /* channel status (invalid if non-zero) */
-   unsigned char  *inputPtr;      /* pointer to current input character */
-   unsigned char  *inputStop;     /* pointer to position after final input character */
-   int             encodedLength; /* encoded length (units of 2/3 bits) */
-   int             currentLength; /* current length (units of 2/3 bits) */
+   int             encScheme;     /* текущая схема кодирования */
+   int             invalid;       /* статус канала (недопустимый, если он ненулевой) */
+   unsigned char  *inputPtr;      /* указатель на текущий входной символ */
+   unsigned char  *inputStop;     /* указатель на позицию после последнего введенного символа */
+   int             encodedLength; /* кодированная длина (единицы измерения по 2/3 бита) */
+   int             currentLength; /* текущая длина (единицы измерения по 2/3 бита) */
    int             firstCodeWord; /* */
    unsigned char   encodedWords[1558];
 } DmtxChannel;
 
-/* Wrap in a struct for fast copies */
+/* Обертывание в структуру для быстрого копирования */
 /**
  * @struct DmtxChannelGroup
  * @brief DmtxChannelGroup
