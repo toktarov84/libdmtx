@@ -41,7 +41,7 @@ dmtxDecodeCreate(DmtxImage *img, int scale)
 
    dec->edgeMin = DmtxUndefined;
    dec->edgeMax = DmtxUndefined;
-   dec->scanGap = 0;
+   dec->scanGap = 5;
    dec->squareDevn = cos(50 * (M_PI/180));
    dec->sizeIdxExpected = DmtxSymbolShapeAuto;
    dec->edgeThresh = 10;
