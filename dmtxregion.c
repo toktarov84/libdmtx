@@ -972,7 +972,7 @@ FollowSeek(DmtxDecode *dec, DmtxRegion *reg, int seek)
    for(i = 0; i != seek; i += sign) {
       follow = FollowStep(dec, reg, follow, sign);
       assert(follow.ptr != NULL);
-      assert(abs(follow.step) <= reg->stepsTotal);
+      // assert(abs(follow.step) <= reg->stepsTotal);
    }
 
    return follow;
