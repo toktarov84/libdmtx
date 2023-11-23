@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-/* Time headers required for DmtxTime struct below */
+/* Временные заголовки, необходимые для приведенной ниже структуры DmtxTime */
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -72,10 +72,10 @@ extern "C" {
 #define DMTX_CHECK_BOUNDS(l,i) (assert((i) >= 0 && (i) < (l)->length && (l)->length <= (l)->capacity))
 
 typedef enum {
-   DmtxStatusEncoding, /* Encoding is currently underway */
-   DmtxStatusComplete, /* Encoding is done and everything went well */
-   DmtxStatusInvalid,  /* Something bad happened that sometimes happens */
-   DmtxStatusFatal     /* Something happened that should never happen */
+   DmtxStatusEncoding, /* В настоящее время ведется кодирование */
+   DmtxStatusComplete, /* Кодирование завершено, и все прошло хорошо */
+   DmtxStatusInvalid,  /* Случилось что-то плохое, что иногда случается */
+   DmtxStatusFatal     /* Случилось то, чего никогда не должно было случиться */
 } DmtxStatus;
 
 typedef enum {
@@ -262,7 +262,7 @@ typedef unsigned char DmtxByte;
 /**
  * @struct DmtxByteList
  * @brief DmtxByteList
- * Use signed int for length fields instead of size_t to play nicely with RS
+ * Используйте signed int для полей длины вместо size_t, чтобы хорошо работать с RS
  * arithmetic
  */
 typedef struct DmtxByteList_struct DmtxByteList;
@@ -276,13 +276,13 @@ struct DmtxByteList_struct
 typedef struct DmtxEncodeStream_struct DmtxEncodeStream;
 struct DmtxEncodeStream_struct
 {
-   int currentScheme;         /* Current encodation scheme */
-   int inputNext;             /* Index of next unprocessed input word in queue */
-   int outputChainValueCount; /* Count of output values pushed within current scheme chain */
-   int outputChainWordCount;  /* Count of output words pushed within current scheme chain */
-   char *reason;              /* Reason for status */
-   int sizeIdx;               /* Symbol size of completed stream */
-   int fnc1;                  /* Character to represent FNC1, or DmtxUndefined */
+   int currentScheme;         /* Текущая схема кодирования */
+   int inputNext;             /* Индекс следующего необработанного входного слова в очереди */
+   int outputChainValueCount; /* Количество выходных значений, переданных в рамках текущей цепочки схем */
+   int outputChainWordCount;  /* Количество выходных слов, переданных в текущей цепочке схем */
+   char *reason;              /* Причина статуса */
+   int sizeIdx;               /* Размер символа завершенного потока */
+   int fnc1;                  /* Символ для представления FNC1 или DmtxUndefined */
    DmtxStatus status;
    DmtxByteList *input;
    DmtxByteList *output;
@@ -343,7 +343,7 @@ typedef struct DmtxBestLine_struct {
  */
 typedef struct DmtxRegion_struct {
 
-   /* Trail blazing values */
+   /* Trail blazing values | След сверкающих ценностей */
    int             jumpToPos;     /* */
    int             jumpToNeg;     /* */
    int             stepsTotal;    /* */
@@ -357,8 +357,8 @@ typedef struct DmtxRegion_struct {
    int             polarity;      /* */
    int             stepR;
    int             stepT;
-   DmtxPixelLoc    locR;          /* remove if stepR works above */
-   DmtxPixelLoc    locT;          /* remove if stepT works above */
+   DmtxPixelLoc    locR;          /* удалите, если stepR работает выше */
+   DmtxPixelLoc    locT;          /* удалите, если stepT работает выше */
 
    /* Значения соответствующие региону */
    int             leftKnown;     /* known == 1; unknown == 0 */
@@ -488,8 +488,8 @@ typedef struct DmtxEncode_struct {
    DmtxMessage    *message;
    DmtxImage      *image;
    DmtxRegion      region;
-   DmtxMatrix3     xfrm;  /* XXX still necessary? */
-   DmtxMatrix3     rxfrm; /* XXX still necessary? */
+   DmtxMatrix3     xfrm;  /* XXX все еще необходимо? */
+   DmtxMatrix3     rxfrm; /* XXX все еще необходимо? */
 } DmtxEncode;
 
 /**
