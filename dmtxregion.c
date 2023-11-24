@@ -700,7 +700,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       colorOffAvg = (colorOffAvg * 2)/(symbolRows + symbolCols);
 
       contrast = abs(colorOnAvg - colorOffAvg);
-      if(contrast < 10)
+      if(contrast < 5)
          continue;
 
       if(contrast > bestContrast) {
