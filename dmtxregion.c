@@ -263,10 +263,10 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
    }
 
    err = FindTravelLimits(dec, reg, &line1x);
-   if(line1x.distSq < 100 || line1x.devn * 10 >= sqrt((double)line1x.distSq)) {
-      TrailClear(dec, reg, 0x40);
-      return DmtxFail;
-   }
+   //if(line1x.distSq < 100 || line1x.devn * 10 >= sqrt((double)line1x.distSq)) {
+   //   TrailClear(dec, reg, 0x40);
+   //   return DmtxFail;
+   //}
    assert(line1x.stepPos >= line1x.stepNeg);
 
    fTmp = FollowSeek(dec, reg, line1x.stepPos + 5);
