@@ -727,7 +727,9 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    /* Счетчик перемещается по горизонтальной калибровочной линейке для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, 0, reg->symbolRows - 1, DmtxDirRight);
    errors = abs(1 + jumpCount - reg->symbolCols);
-   if(jumpCount < 0 || errors > 2)
+   //if(jumpCount < 0 || errors > 2)
+   //   return DmtxFail;
+   if(jumpCount < 0)
       return DmtxFail;
 
    /* Счетчик перемещается по вертикальной шкале калибровки для проверки размера(sizeIdx). */
