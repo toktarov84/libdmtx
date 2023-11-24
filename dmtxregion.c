@@ -712,8 +712,8 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    }
 
    /* Если ни один из размеров не обеспечил приемлемого контраста, то считайте, что все завершено */
-   if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
-      return DmtxFail;
+   //if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
+   //   return DmtxFail;
 
    reg->sizeIdx = bestSizeIdx;
    reg->onColor = bestColorOnAvg;
