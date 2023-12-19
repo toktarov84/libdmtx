@@ -11,13 +11,13 @@
  * Mike Laughton <mike@dragonflylogic.com>
  *
  * \file dmtxscangrid.c
- * \brief Scan grid tracking
+ * \brief Отслеживание сетки сканирования
  */
 
 /**
- * \brief  Initialize scan grid pattern
+ * \brief  Инициализировать шаблон сетки сканирования
  * \param  dec
- * \return Initialized grid
+ * \return Инициализированная сетка
  */
 static DmtxScanGrid
 InitScanGrid(DmtxDecode *dec)
@@ -63,9 +63,9 @@ InitScanGrid(DmtxDecode *dec)
 }
 
 /**
- * \brief  Return the next good location (which may be the current location),
- *         and advance grid progress one position beyond that. If no good
- *         locations remain then return DmtxRangeEnd.
+ * \brief  Верните следующее подходящее местоположение (которое может быть текущим местоположением),
+ *         и продвигайтесь по сетке на одну позицию дальше этого. Если ничего хорошего
+ *         местоположения остаются, затем возвращается DmtxRangeEnd.
  * \param  grid
  * \return void
  */
@@ -77,7 +77,7 @@ PopGridLocation(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
    do {
       locStatus = GetGridCoordinates(grid, locPtr);
 
-      /* Always leave grid pointing at next available location */
+      /* Всегда оставляйте сетку указывающей на следующее доступное местоположение */
       grid->pixelCount++;
 
    } while(locStatus == DmtxRangeBad);
@@ -86,10 +86,10 @@ PopGridLocation(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
 }
 
 /**
- * \brief  Extract current grid position in pixel coordinates and return
- *         whether location is good, bad, or end
+ * \brief  Извлеките текущее положение сетки в пиксельных координатах и верните
+ *         является ли местоположение хорошим, плохим или конечным
  * \param  grid
- * \return Pixel location
+ * \return Местоположение пикселя
  */
 static int
 GetGridCoordinates(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
@@ -97,22 +97,22 @@ GetGridCoordinates(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
    int count, half, quarter;
    DmtxPixelLoc loc;
 
-   /* Initially pixelCount may fall beyond acceptable limits. Update grid
-    * state before testing coordinates */
+   /* Первоначально количество пикселей может выходить за допустимые пределы. Обновить сетку
+    * состояние перед проверкой координат */
 
-   /* Jump to next cross pattern horizontally if current column is done */
+   /* Переход к следующему перекрестному узору по горизонтали, если текущий столбец завершен */
    if(grid->pixelCount >= grid->pixelTotal) {
       grid->pixelCount = 0;
       grid->xCenter += grid->jumpSize;
    }
 
-   /* Jump to next cross pattern vertically if current row is done */
+   /* Переход к следующему перекрестному узору по вертикали, если текущая строка завершена */
    if(grid->xCenter > grid->maxExtent) {
       grid->xCenter = grid->startPos;
       grid->yCenter += grid->jumpSize;
    }
 
-   /* Increment level when vertical step goes too far */
+   /* Увеличивайте уровень, когда вертикальный шаг заходит слишком далеко */
    if(grid->yCenter > grid->maxExtent) {
       grid->total *= 4;
       grid->extent /= 2;
@@ -163,7 +163,7 @@ GetGridCoordinates(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
 }
 
 /**
- * \brief  Update derived fields based on current state
+ * \brief  Обновлять производные поля на основе текущего состояния
  * \param  grid
  * \return void
  */
