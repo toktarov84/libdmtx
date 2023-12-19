@@ -37,7 +37,7 @@ InitScanGrid(DmtxDecode *dec)
    grid.yMin = dmtxDecodeGetProp(dec, DmtxPropYmin);
    grid.yMax = dmtxDecodeGetProp(dec, DmtxPropYmax);
 
-   /* Values that get set once */
+   /* Значения, которые устанавливаются один раз */
    xExtent = grid.xMax - grid.xMin;
    yExtent = grid.yMax - grid.yMin;
    maxExtent = (xExtent > yExtent) ? xExtent : yExtent;
@@ -53,7 +53,7 @@ InitScanGrid(DmtxDecode *dec)
    grid.xOffset = (grid.xMin + grid.xMax - grid.maxExtent) / 2;
    grid.yOffset = (grid.yMin + grid.yMax - grid.maxExtent) / 2;
 
-   /* Values that get reset for every level */
+   /* Значения, которые сбрасываются для каждого уровня */
    grid.total = 1;
    grid.extent = grid.maxExtent;
 
@@ -137,12 +137,12 @@ GetGridCoordinates(DmtxScanGrid *grid, DmtxPixelLoc *locPtr)
       half = grid->pixelTotal / 2;
       quarter = half / 2;
 
-      /* horizontal portion */
+      /* горизонтальная позиция */
       if(count < half) {
          loc.X = grid->xCenter + ((count < quarter) ? (count - quarter) : (half - count));
          loc.Y = grid->yCenter;
       }
-      /* vertical portion */
+      /* вертикальная позиция */
       else {
          count -= half;
          loc.X = grid->xCenter;
