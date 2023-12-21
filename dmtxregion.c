@@ -188,7 +188,7 @@ MatrixRegionSeekEdge(DmtxDecode *dec, DmtxPixelLoc loc)
       if(flowPos.arrive == (flowPosBack.arrive+4)%8 &&
             flowNeg.arrive == (flowNegBack.arrive+4)%8) {
          flow.arrive = dmtxNeighborNone;
-         CALLBACK_POINT_PLOT(flow.loc, 1, 1, 1);
+         // CALLBACK_POINT_PLOT(flow.loc, 1, 1, 1);
          return flow;
       }
    }
