@@ -728,40 +728,40 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    /* Счетчик перемещается по горизонтальной калибровочной линейке для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, 0, reg->symbolRows - 1, DmtxDirRight);
    errors = abs(1 + jumpCount - reg->symbolCols);
-   if(jumpCount < 0 || errors > 3)
+   if(jumpCount < 0 || errors > 4)
       return DmtxFail;
 
    /* Счетчик перемещается по вертикальной шкале калибровки для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, reg->symbolCols - 1, 0, DmtxDirUp);
    errors = abs(1 + jumpCount - reg->symbolRows);
-   if(jumpCount < 0 || errors > 3)
+   if(jumpCount < 0 || errors > 4)
       return DmtxFail;
 
    /* Подсчет переходит на горизонтальную панель поиска для проверки размера(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirRight);
-   if(jumpCount < 0 || errors > 3)
+   if(jumpCount < 0 || errors > 4)
       return DmtxFail;
 
    /* Подсчет переходит на вертикальную панель поиска, чтобы проверить размер(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirUp);
-   if(errors < 0 || errors > 3)
+   if(errors < 0 || errors > 4)
      return DmtxFail;
 
    /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
    errors = CountJumpTally(dec, reg, 0, -1, DmtxDirRight);
-   if(errors < 0 || errors > 3)
+   if(errors < 0 || errors > 4)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, -1, 0, DmtxDirUp);
-   if(errors < 0 || errors > 3)
+   if(errors < 0 || errors > 4)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, 0, reg->symbolRows, DmtxDirRight);
-   if(errors < 0 || errors > 3)
+   if(errors < 0 || errors > 4)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, reg->symbolCols, 0, DmtxDirUp);
-   if(errors < 0 || errors > 3)
+   if(errors < 0 || errors > 4)
      return DmtxFail;
 
    return DmtxPass;
