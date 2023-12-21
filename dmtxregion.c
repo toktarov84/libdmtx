@@ -226,7 +226,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
 
    if(dec->edgeMax != DmtxUndefined) {
       if(symbolShape == DmtxSymbolRectAuto)
-         maxDiagonal = (int)(1.56 * dec->edgeMax + 0.5); /* sqrt(5/4) + 10% */
+         maxDiagonal = (int)(1.1 * dec->edgeMax + 0.5); /* sqrt(5/4) + 10% */
       else
          maxDiagonal = (int)(1.56 * dec->edgeMax + 0.5); /* sqrt(2) + 10% */
    }
