@@ -670,8 +670,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    }
 
    /* Протестируйте каждый размер штрих-кода, чтобы найти наилучший контраст в калибровочных модулях */
-   // for(sizeIdx = sizeIdxBeg; sizeIdx < sizeIdxEnd; sizeIdx++) {
-   for(sizeIdx = 12; sizeIdx < 15; sizeIdx++) {
+   for(sizeIdx = sizeIdxBeg; sizeIdx < sizeIdxEnd; sizeIdx++) {
 
       symbolRows = dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, sizeIdx);
       symbolCols = dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, sizeIdx);
