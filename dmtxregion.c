@@ -700,7 +700,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       colorOffAvg = (colorOffAvg * 2)/(symbolRows + symbolCols);
 
       contrast = abs(colorOnAvg - colorOffAvg);
-      if(contrast < 5)
+      if(contrast < 1)
          continue;
 
       if(contrast > bestContrast) {
@@ -713,7 +713,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
 
    /* Если ни один из размеров не обеспечил приемлемого контраста, то считайте, что все завершено */
    // if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
-   if(bestSizeIdx == DmtxUndefined || bestContrast < 5)
+   if(bestSizeIdx == DmtxUndefined || bestContrast < 1)
       return DmtxFail;
 
    reg->sizeIdx = bestSizeIdx;
