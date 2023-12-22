@@ -700,7 +700,8 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       colorOffAvg = (colorOffAvg * 2)/(symbolRows + symbolCols);
 
       contrast = abs(colorOnAvg - colorOffAvg);
-      if(contrast < 5)
+      //if(contrast < 5)
+      if(contrast < 1)
          continue;
 
       if(contrast > bestContrast) {
@@ -739,29 +740,29 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
 
    /* Подсчет переходит на горизонтальную панель поиска для проверки размера(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirRight);
-   if(jumpCount < 0 || errors > 9)
+   if(jumpCount < 0 || errors > 5)
       return DmtxFail;
 
    /* Подсчет переходит на вертикальную панель поиска, чтобы проверить размер(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirUp);
-   if(errors < 0 || errors > 9)
+   if(errors < 0 || errors > 5)
      return DmtxFail;
 
    /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
    errors = CountJumpTally(dec, reg, 0, -1, DmtxDirRight);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 5)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, -1, 0, DmtxDirUp);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 5)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, 0, reg->symbolRows, DmtxDirRight);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 5)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, reg->symbolCols, 0, DmtxDirUp);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 5)
      return DmtxFail;
 
    return DmtxPass;
