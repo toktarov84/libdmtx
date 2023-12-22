@@ -749,19 +749,19 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
 
    /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
    errors = CountJumpTally(dec, reg, 0, -1, DmtxDirRight);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 3)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, -1, 0, DmtxDirUp);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 3)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, 0, reg->symbolRows, DmtxDirRight);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 3)
      return DmtxFail;
 
    errors = CountJumpTally(dec, reg, reg->symbolCols, 0, DmtxDirUp);
-   if(errors < 0 || errors > 2)
+   if(errors < 0 || errors > 3)
      return DmtxFail;
 
    return DmtxPass;
