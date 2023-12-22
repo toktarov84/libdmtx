@@ -739,12 +739,12 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
 
    /* Подсчет переходит на горизонтальную панель поиска для проверки размера(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirRight);
-   if(jumpCount < 0 || errors > 5)
+   if(jumpCount < 0 || errors > 9)
       return DmtxFail;
 
    /* Подсчет переходит на вертикальную панель поиска, чтобы проверить размер(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirUp);
-   if(errors < 0 || errors > 5)
+   if(errors < 0 || errors > 9)
      return DmtxFail;
 
    /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
