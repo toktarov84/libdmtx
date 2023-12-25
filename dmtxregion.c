@@ -715,6 +715,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    /* Если ни один из размеров не обеспечил приемлемого контраста, то считайте, что все завершено */
    // if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
    if(bestSizeIdx == DmtxUndefined || bestContrast < 1)
+
       return DmtxFail;
 
    reg->sizeIdx = bestSizeIdx;
@@ -1108,7 +1109,7 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
 
          /* Найдите самого сильного подходящего соседа */
          flowNext = FindStrongestNeighbor(dec, flow, sign);
-         if(flowNext.mag < 5)
+         if(flowNext.mag < 50)
             break;
 
          /* Получить местоположение кэша соседа */
@@ -1214,7 +1215,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
          err = BresLineGetStep(line, flowNext.loc, &travel, &outward);
          if (err == DmtxFail) { return DmtxFail; }
 
-         if(flowNext.mag < 5 || outward < 0 || (outward == 0 && travel < 0)) {
+         if(flowNext.mag < 50 || outward < 0 || (outward == 0 && travel < 0)) {
             onEdge = DmtxFalse;
          }
          else {
@@ -1226,7 +1227,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
       if(onEdge == DmtxFalse) {
          BresLineStep(&line, 1, 0);
          flow = GetPointFlow(dec, reg->flowBegin.plane, line.loc, dmtxNeighborNone);
-         if(flow.mag > 5)
+         if(flow.mag > 50)
             onEdge = DmtxTrue;
       }
 
