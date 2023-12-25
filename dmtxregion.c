@@ -729,23 +729,23 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    /* Счетчик перемещается по горизонтальной калибровочной линейке для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, 0, reg->symbolRows - 1, DmtxDirRight);
    errors = abs(1 + jumpCount - reg->symbolCols);
-   if(jumpCount < 0 || errors > 5)
+   if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
    /* Счетчик перемещается по вертикальной шкале калибровки для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, reg->symbolCols - 1, 0, DmtxDirUp);
    errors = abs(1 + jumpCount - reg->symbolRows);
-   if(jumpCount < 0 || errors > 5)
+   if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
    /* Подсчет переходит на горизонтальную панель поиска для проверки размера(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirRight);
-   if(jumpCount < 0 || errors > 5)
+   if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
    /* Подсчет переходит на вертикальную панель поиска, чтобы проверить размер(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirUp);
-   if(errors < 0 || errors > 5)
+   if(errors < 0 || errors > 2)
      return DmtxFail;
 
    /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
@@ -1108,7 +1108,7 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
 
          /* Найдите самого сильного подходящего соседа */
          flowNext = FindStrongestNeighbor(dec, flow, sign);
-         if(flowNext.mag < 50)
+         if(flowNext.mag < 20)
             break;
 
          /* Получить местоположение кэша соседа */
@@ -1214,7 +1214,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
          err = BresLineGetStep(line, flowNext.loc, &travel, &outward);
          if (err == DmtxFail) { return DmtxFail; }
 
-         if(flowNext.mag < 50 || outward < 0 || (outward == 0 && travel < 0)) {
+         if(flowNext.mag < 20 || outward < 0 || (outward == 0 && travel < 0)) {
             onEdge = DmtxFalse;
          }
          else {
@@ -1226,7 +1226,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
       if(onEdge == DmtxFalse) {
          BresLineStep(&line, 1, 0);
          flow = GetPointFlow(dec, reg->flowBegin.plane, line.loc, dmtxNeighborNone);
-         if(flow.mag > 50)
+         if(flow.mag > 20)
             onEdge = DmtxTrue;
       }
 
