@@ -12,12 +12,12 @@
  * Mike Laughton <mike@dragonflylogic.com>
  *
  * \file dmtxsymbol.c
- * \brief Data Matrix symbol attributes
+ * \brief Атрибуты символов матрицы данных
  */
 
 
 /**
- * \brief  Retrieve symbol index from rows and columns
+ * \brief  Извлекать индекс символа из строк и столбцов
  * \param  rows
  * \param  cols
  * \return sizeIdx value
@@ -38,10 +38,10 @@ getSizeIdxFromSymbolDimension(int rows, int cols)
 
 
 /**
- * \brief  Retrieve property based on symbol size
+ * \brief  Извлекать свойство на основе размера символа
  * \param  attribute
  * \param  sizeIdx
- * \return Attribute value
+ * \return Значение атрибута
  */
 extern int
 dmtxGetSymbolAttribute(int attribute, int sizeIdx)
@@ -139,10 +139,10 @@ dmtxGetSymbolAttribute(int attribute, int sizeIdx)
 }
 
 /**
- * \brief  Retrieve data size for a specific symbol size and block number
+ * \brief  Извлеките размер данных для определенного размера символа и номера блока
  * \param  sizeIdx
  * \param  blockIdx
- * \return Attribute value
+ * \return Значение атрибута
  */
 extern int
 dmtxGetBlockDataSize(int sizeIdx, int blockIdx)
@@ -163,10 +163,10 @@ dmtxGetBlockDataSize(int sizeIdx, int blockIdx)
 }
 
 /**
- * \brief  Determine symbol size based on data size and requested properties
+ * \brief  Определите размер символа на основе размера данных и запрашиваемых свойств
  * \param  dataWords
  * \param  sizeIdxRequest
- * \return Symbol size index (or DmtxUndefined if none)
+ * \return Индекс размера символа (или DmtxUndefined, если нет)
  */
 static int
 FindSymbolSize(int dataWords, int sizeIdxRequest)
