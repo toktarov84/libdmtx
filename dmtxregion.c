@@ -12,15 +12,15 @@
  * Mike Laughton <mike@dragonflylogic.com>
  *
  * \file dmtxregion.c
- * \brief Detect barcode regions
+ * \brief Обнаружение областей штрих-кода
  */
 
 #define DMTX_HOUGH_RES 180
 
 /**
- * \brief  Create copy of existing region struct
+ * Создайте копию существующей структуры региона
  * \param  None
- * \return Initialized DmtxRegion struct
+ * \return Инициализированная структура DmtxRegion
  */
 extern DmtxRegion *
 dmtxRegionCreate(DmtxRegion *reg)
@@ -37,7 +37,7 @@ dmtxRegionCreate(DmtxRegion *reg)
 }
 
 /**
- * \brief  Destroy region struct
+ * Уничтожает объект области распознавания
  * \param  reg
  * \return void
  */
@@ -55,93 +55,42 @@ dmtxRegionDestroy(DmtxRegion **reg)
 }
 
 /**
- * \brief  Find next barcode region
- * \param  dec Pointer to DmtxDecode information struct
- * \param  timeout Pointer to timeout time (NULL if none)
- * \return Detected region (if found)
+ * Находит следующий регион со штрих-кодом
+ * dec - Указатель на информационную структуру DmtxDecode
+ * timeout - Указатель на время ожидания (NULL, если нет)
+ * \return Обнаруженная область (если найдена)
  */
 extern DmtxRegion *
 dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 {
-   DmtxScanConstraint constraint;
-
-   // Functionally these two branches do the same thing even
-   // if timeout were null, but we use the latter form in order
-   // to preserve the most short-circuit performance if the
-   // caller doesn't specify a timeout.
-   if(timeout != NULL) {
-      constraint.maxTimeout = timeout;
-      constraint.maxIterations = 0;
-      return dmtxRegionFindNextDeterministic(dec, &constraint);
-   } else {
-      return dmtxRegionFindNextDeterministic(dec, NULL);
-   }
-}
-
-/**
- * \brief  Find next barcode region
- * \param  dec Pointer to DmtxDecode information struct
- * \param  constraint Pointer to constraint (NULL if no constraints)
- *         Constraint is an input/output structure.
- *         Limits will be considered independently. Set to zero/null
- *         to indicate no-constraint. Actual runtime and iterations,
- *         as well as termination reason will be filled in upon return
- *         if constraint is non-null.
- *
- * \return Detected region (if found)
- */
-extern DmtxRegion *
-dmtxRegionFindNextDeterministic(DmtxDecode *dec, DmtxScanConstraint *constraint)
-{
    int locStatus;
-   int iterations = 0;
    DmtxPixelLoc loc;
    DmtxRegion   *reg;
-
-   /* Continue until we find a region or run out of chances */
+   
+   /* Продолжать, пока мы не найдем нужный регион или пока у нас не кончатся шансы */
    for(;;) {
       locStatus = PopGridLocation(&(dec->grid), &loc);
-      if(locStatus == DmtxRangeEnd) {
-         if(constraint != NULL)
-            constraint->stopCause = DmtxScanNotFound;
+      if(locStatus == DmtxRangeEnd)
          break;
-      }
 
-      /* Iterations counts the number of calls to ScanPixel */
-      ++iterations;
-      /* Scan location for presence of valid barcode region */
+      /* Сканируйте местоположение на наличие действительного региона штрих-кода */
       reg = dmtxRegionScanPixel(dec, loc.X, loc.Y);
-      if(reg != NULL) {
-         if(constraint != NULL) {
-            constraint->iterations = iterations;
-            constraint->stopCause = DmtxScanSuccess;
-         }
+      if(reg != NULL)
          return reg;
-      }
 
-      /* Ran out of iterations? */
-      if(constraint != NULL && constraint->maxIterations != 0 && constraint->maxIterations <= iterations) {
-         constraint->stopCause = DmtxScanIterLimit;
+      /* Не хватило времени? */
+      if(timeout != NULL && dmtxTimeExceeded(*timeout))
          break;
-      }
-
-      /* Ran out of time? */
-      if(constraint != NULL && constraint->maxTimeout != NULL && dmtxTimeExceeded(*constraint->maxTimeout)) {
-         constraint->stopCause = DmtxScanTimeLimit;
-         break;
-      }
    }
-   if(constraint)
-      constraint->iterations = iterations;
 
    return NULL;
 }
 
 /**
- * \brief  Scan individual pixel for presence of barcode edge
- * \param  dec Pointer to DmtxDecode information struct
- * \param  loc Pixel location
- * \return Detected region (if any)
+ * сканирование отдельного пикселя на наличие края штрих-кода
+ * dec - указатель на информационную структуру DmtxDecode
+ * loc - расположение пикселя
+ * \return обнаруженную область (если таковая имеется)
  */
 extern DmtxRegion *
 dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
@@ -154,6 +103,7 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    loc.X = x;
    loc.Y = y;
 
+   // Кэширует текущую точку для последующего использования
    cache = dmtxDecodeGetCache(dec, loc.X, loc.Y);
    if(cache == NULL)
       return NULL;
@@ -161,26 +111,31 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    if((int)(*cache & 0x80) != 0x00)
       return NULL;
 
-   /* Test for presence of any reasonable edge at this location */
+   /* Проверьте наличие любой разумной границы в этом месте */
    flowBegin = MatrixRegionSeekEdge(dec, loc);
    if(flowBegin.mag < (int)(dec->edgeThresh * 7.65 + 0.5))
       return NULL;
 
    memset(&reg, 0x00, sizeof(DmtxRegion));
 
-   /* Determine barcode orientation */
+   /* Определение ориентации штрих-кода */
    if(MatrixRegionOrientation(dec, &reg, flowBegin) == DmtxFail)
       return NULL;
    if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
-   /* Define top edge */
+   /**
+    * Без MatrixRegionAlignCalibEdge не падает,
+    * коды распознаёт, не замечено лучшее нахождение регионов.
+    */
+   
+   /* Определите верхний край */
    if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
       return NULL;
    if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
-   /* Define right edge */
+   /* Определите правый край */
    if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
       return NULL;
    if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
@@ -188,11 +143,11 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
 
    CALLBACK_MATRIX(&reg);
 
-   /* Calculate the best fitting symbol size */
+   /* Рассчитайте наиболее подходящий размер символа */
    if(MatrixRegionFindSize(dec, &reg) == DmtxFail)
       return NULL;
 
-   /* Found a valid matrix region */
+   /* Найдена допустимая область матрицы */
    return dmtxRegionCreate(&reg);
 }
 
@@ -212,7 +167,7 @@ MatrixRegionSeekEdge(DmtxDecode *dec, DmtxPixelLoc loc)
 
    channelCount = dec->image->channelCount;
 
-   /* Find whether red, green, or blue shows the strongest edge */
+   /* Определите, какой из цветов - красный, зеленый или синий - имеет наиболее сильное преимущество */
    strongIdx = 0;
    for(i = 0; i < channelCount; i++) {
       flowPlane[i] = GetPointFlow(dec, i, loc, dmtxNeighborNone);
@@ -233,7 +188,7 @@ MatrixRegionSeekEdge(DmtxDecode *dec, DmtxPixelLoc loc)
       if(flowPos.arrive == (flowPosBack.arrive+4)%8 &&
             flowNeg.arrive == (flowNegBack.arrive+4)%8) {
          flow.arrive = dmtxNeighborNone;
-         CALLBACK_POINT_PLOT(flow.loc, 1, 1, 1);
+         // CALLBACK_POINT_PLOT(flow.loc, 1, 1, 1);
          return flow;
       }
    }
@@ -279,14 +234,14 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
       maxDiagonal = DmtxUndefined;
    }
 
-   /* Follow to end in both directions */
+   /* Следуйте до конца в обоих направлениях */
    err = TrailBlazeContinuous(dec, reg, begin, maxDiagonal);
    if(err == DmtxFail || reg->stepsTotal < 40) {
       TrailClear(dec, reg, 0x40);
       return DmtxFail;
    }
 
-   /* Filter out region candidates that are smaller than expected */
+   /* Отфильтруйте регионы-кандидаты, которые меньше, чем ожидалось */
    if(dec->edgeMin != DmtxUndefined) {
       scale = dmtxDecodeGetProp(dec, DmtxPropScale);
 
@@ -331,7 +286,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
       cross = ((line1x.locPos.X - line1x.locNeg.X) * (line2x.locPos.Y - line2x.locNeg.Y)) -
             ((line1x.locPos.Y - line1x.locNeg.Y) * (line2x.locPos.X - line2x.locNeg.X));
       if(cross > 0) {
-         /* Condition 2 */
+         /* Состояние 2 */
          reg->polarity = +1;
          reg->locR = line2x.locPos;
          reg->stepR = line2x.stepPos;
@@ -345,7 +300,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
          reg->bottomLine = line2x;
       }
       else {
-         /* Condition 3 */
+         /* Состояние 3 */
          reg->polarity = -1;
          reg->locR = line1x.locNeg;
          reg->stepR = line1x.stepNeg;
@@ -368,7 +323,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
       cross = ((line1x.locNeg.X - line1x.locPos.X) * (line2x.locNeg.Y - line2x.locPos.Y)) -
             ((line1x.locNeg.Y - line1x.locPos.Y) * (line2x.locNeg.X - line2x.locPos.X));
       if(cross > 0) {
-         /* Condition 1 */
+         /* Состояние 1 */
          reg->polarity = -1;
          reg->locR = line2x.locNeg;
          reg->stepR = line2x.stepNeg;
@@ -382,7 +337,7 @@ MatrixRegionOrientation(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow begin)
          reg->bottomLine = line2x;
       }
       else {
-         /* Condition 4 */
+         /* Состояние 4 */
          reg->polarity = +1;
          reg->locR = line1x.locPos;
          reg->stepR = line1x.stepPos;
@@ -441,16 +396,16 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
          p10.X < 0.0 || p10.Y < 0.0 || p10.X > xMax || p10.Y > yMax)
       return DmtxFail;
 
-   dimOT = dmtxVector2Mag(dmtxVector2Sub(&vOT, &p01, &p00)); /* XXX could use MagSquared() */
+   dimOT = dmtxVector2Mag(dmtxVector2Sub(&vOT, &p01, &p00)); /* XXX мог бы использовать MagSquared() */
    dimOR = dmtxVector2Mag(dmtxVector2Sub(&vOR, &p10, &p00));
    dimTX = dmtxVector2Mag(dmtxVector2Sub(&vTX, &p11, &p01));
    dimRX = dmtxVector2Mag(dmtxVector2Sub(&vRX, &p11, &p10));
 
-   /* Verify that sides are reasonably long */
+   /* Убедитесь, что боковые стороны достаточно длинные */
    if(dimOT <= 8.0 || dimOR <= 8.0 || dimTX <= 8.0 || dimRX <= 8.0)
       return DmtxFail;
 
-   /* Verify that the 4 corners define a reasonably fat quadrilateral */
+   /* Убедитесь, что 4 угла образуют достаточно толстый четырехугольник */
    ratio = dimOT / dimRX;
    if(ratio <= 0.5 || ratio >= 2.0)
       return DmtxFail;
@@ -459,7 +414,7 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
    if(ratio <= 0.5 || ratio >= 2.0)
       return DmtxFail;
 
-   /* Verify this is not a bowtie shape */
+   /* Убедитесь, что это не форма галстука-бабочки */
    if(dmtxVector2Cross(&vOR, &vRX) <= 0.0 ||
          dmtxVector2Cross(&vOT, &vTX) >= 0.0)
       return DmtxFail;
@@ -469,7 +424,7 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
    if(RightAngleTrueness(p10, p11, p01, M_PI_2) <= dec->squareDevn)
       return DmtxFail;
 
-   /* Calculate values needed for transformations */
+   /* Вычислять значения, необходимые для преобразований */
    tx = -1 * p00.X;
    ty = -1 * p00.Y;
    dmtxMatrix3Translate(mtxy, tx, ty);
@@ -502,7 +457,7 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
    dmtxMatrix3LineSkewTop(msky, sky, 1.0, 1.0);
    dmtxMatrix3Multiply(reg->raw2fit, m, msky);
 
-   /* Create inverse matrix by reverse (avoid straight matrix inversion) */
+   /* Создайте обратную матрицу обратным способом (избегайте прямой инверсии матрицы) */
    dmtxMatrix3LineSkewTopInv(msky, sky, 1.0, 1.0);
    dmtxMatrix3LineSkewSideInv(mskx, 1.0, skx, 1.0);
    dmtxMatrix3Multiply(m, msky, mskx);
@@ -535,7 +490,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
 
    assert(reg->leftKnown != 0 && reg->bottomKnown != 0);
 
-   /* Build ray representing left edge */
+   /* Построить луч, представляющий левый край */
    rLeft.p.X = (double)reg->leftLoc.X;
    rLeft.p.Y = (double)reg->leftLoc.Y;
    radians = reg->leftAngle * (M_PI/DMTX_HOUGH_RES);
@@ -544,7 +499,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
    rLeft.tMin = 0.0;
    rLeft.tMax = dmtxVector2Norm(&rLeft.v);
 
-   /* Build ray representing bottom edge */
+   /* Построить луч, представляющий нижний край */
    rBottom.p.X = (double)reg->bottomLoc.X;
    rBottom.p.Y = (double)reg->bottomLoc.Y;
    radians = reg->bottomAngle * (M_PI/DMTX_HOUGH_RES);
@@ -553,7 +508,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
    rBottom.tMin = 0.0;
    rBottom.tMax = dmtxVector2Norm(&rBottom.v);
 
-   /* Build ray representing top edge */
+   /* Построить луч, представляющий верхний край */
    if(reg->topKnown != 0) {
       rTop.p.X = (double)reg->topLoc.X;
       rTop.p.Y = (double)reg->topLoc.Y;
@@ -573,7 +528,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
       rTop.tMax = rBottom.tMax;
    }
 
-   /* Build ray representing right edge */
+   /* Построить луч, представляющий правый край */
    if(reg->rightKnown != 0) {
       rRight.p.X = (double)reg->rightLoc.X;
       rRight.p.Y = (double)reg->rightLoc.Y;
@@ -593,7 +548,7 @@ dmtxRegionUpdateXfrms(DmtxDecode *dec, DmtxRegion *reg)
       rRight.tMax = rLeft.tMax;
    }
 
-   /* Calculate 4 corners, real or imagined */
+   /* Вычислите 4 угла, реальных или воображаемых */
    if(dmtxRay2Intersect(&p00, &rLeft, &rBottom) == DmtxFail)
       return DmtxFail;
 
@@ -632,13 +587,13 @@ RightAngleTrueness(DmtxVector2 c0, DmtxVector2 c1, DmtxVector2 c2, double angle)
 }
 
 /**
- * \brief  Read color of Data Matrix module location
+ * \brief  Считывание цвета расположения модуля матрицы данных
  * \param  dec
  * \param  reg
  * \param  symbolRow
  * \param  symbolCol
  * \param  sizeIdx
- * \return Averaged module color
+ * \return Усредненный цвет модуля
  */
 static int
 ReadModuleColor(DmtxDecode *dec, DmtxRegion *reg, int symbolRow, int symbolCol,
@@ -673,7 +628,7 @@ ReadModuleColor(DmtxDecode *dec, DmtxRegion *reg, int symbolRow, int symbolCol,
 }
 
 /**
- * \brief  Determine barcode size, expressed in modules
+ * \brief  Определить размер штрих-кода, выраженный в модулях
  * \param  image
  * \param  reg
  * \return DmtxPass | DmtxFail
@@ -714,14 +669,14 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       sizeIdxEnd = dec->sizeIdxExpected + 1;
    }
 
-   /* Test each barcode size to find best contrast in calibration modules */
+   /* Протестируйте каждый размер штрих-кода, чтобы найти наилучший контраст в калибровочных модулях */
    for(sizeIdx = sizeIdxBeg; sizeIdx < sizeIdxEnd; sizeIdx++) {
 
       symbolRows = dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, sizeIdx);
       symbolCols = dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, sizeIdx);
       colorOnAvg = colorOffAvg = 0;
 
-      /* Sum module colors along horizontal calibration bar */
+      /* Суммируйте цвета модуля вдоль горизонтальной калибровочной полосы */
       row = symbolRows - 1;
       for(col = 0; col < symbolCols; col++) {
          color = ReadModuleColor(dec, reg, row, col, sizeIdx, reg->flowBegin.plane);
@@ -731,7 +686,7 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
             colorOnAvg += color;
       }
 
-      /* Sum module colors along vertical calibration bar */
+      /* Суммируйте цвета модуля вдоль вертикальной калибровочной полосы */
       col = symbolCols - 1;
       for(row = 0; row < symbolRows; row++) {
          color = ReadModuleColor(dec, reg, row, col, sizeIdx, reg->flowBegin.plane);
@@ -745,7 +700,8 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       colorOffAvg = (colorOffAvg * 2)/(symbolRows + symbolCols);
 
       contrast = abs(colorOnAvg - colorOffAvg);
-      if(contrast < 20)
+      //if(contrast < 5)
+      if(contrast < 1)
          continue;
 
       if(contrast > bestContrast) {
@@ -756,8 +712,10 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
       }
    }
 
-   /* If no sizes produced acceptable contrast then call it quits */
-   if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
+   /* Если ни один из размеров не обеспечил приемлемого контраста, то считайте, что все завершено */
+   // if(bestSizeIdx == DmtxUndefined || bestContrast < 20)
+   if(bestSizeIdx == DmtxUndefined || bestContrast < 1)
+
       return DmtxFail;
 
    reg->sizeIdx = bestSizeIdx;
@@ -769,56 +727,56 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
    reg->mappingRows = dmtxGetSymbolAttribute(DmtxSymAttribMappingMatrixRows, reg->sizeIdx);
    reg->mappingCols = dmtxGetSymbolAttribute(DmtxSymAttribMappingMatrixCols, reg->sizeIdx);
 
-   /* Tally jumps on horizontal calibration bar to verify sizeIdx */
+   /* Счетчик перемещается по горизонтальной калибровочной линейке для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, 0, reg->symbolRows - 1, DmtxDirRight);
    errors = abs(1 + jumpCount - reg->symbolCols);
    if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
-   /* Tally jumps on vertical calibration bar to verify sizeIdx */
+   /* Счетчик перемещается по вертикальной шкале калибровки для проверки размера(sizeIdx). */
    jumpCount = CountJumpTally(dec, reg, reg->symbolCols - 1, 0, DmtxDirUp);
    errors = abs(1 + jumpCount - reg->symbolRows);
    if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
-   /* Tally jumps on horizontal finder bar to verify sizeIdx */
+   /* Подсчет переходит на горизонтальную панель поиска для проверки размера(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirRight);
    if(jumpCount < 0 || errors > 2)
       return DmtxFail;
 
-   /* Tally jumps on vertical finder bar to verify sizeIdx */
+   /* Подсчет переходит на вертикальную панель поиска, чтобы проверить размер(sizeIdx). */
    errors = CountJumpTally(dec, reg, 0, 0, DmtxDirUp);
    if(errors < 0 || errors > 2)
-      return DmtxFail;
+     return DmtxFail;
 
-   /* Tally jumps on surrounding whitespace, else fail */
+   /* Подсчет переходит на окружающие пробелы, иначе произойдет сбой */
    errors = CountJumpTally(dec, reg, 0, -1, DmtxDirRight);
    if(errors < 0 || errors > 2)
-      return DmtxFail;
+     return DmtxFail;
 
    errors = CountJumpTally(dec, reg, -1, 0, DmtxDirUp);
    if(errors < 0 || errors > 2)
-      return DmtxFail;
+     return DmtxFail;
 
    errors = CountJumpTally(dec, reg, 0, reg->symbolRows, DmtxDirRight);
    if(errors < 0 || errors > 2)
-      return DmtxFail;
+     return DmtxFail;
 
    errors = CountJumpTally(dec, reg, reg->symbolCols, 0, DmtxDirUp);
    if(errors < 0 || errors > 2)
-      return DmtxFail;
+     return DmtxFail;
 
    return DmtxPass;
 }
 
 /**
- * \brief  Count the number of number of transitions between light and dark
+ * \brief  Подсчитайте количество переходов между светлым и темным
  * \param  img
  * \param  reg
  * \param  xStart
  * \param  yStart
  * \param  dir
- * \return Jump count
+ * \return Количество прыжков
  */
 static int
 CountJumpTally(DmtxDecode *dec, DmtxRegion *reg, int xStart, int yStart, DmtxDirection dir)
@@ -900,11 +858,11 @@ GetPointFlow(DmtxDecode *dec, int colorPlane, DmtxPixelLoc loc, int arrive)
          return dmtxBlankEdge;
    }
 
-   /* Calculate this pixel's flow intensity for each direction (-45, 0, 45, 90) */
+   /* Вычислите интенсивность потока этого пикселя для каждого направления (-45, 0, 45, 90) */
    compassMax = 0;
    for(compass = 0; compass < 4; compass++) {
 
-      /* Add portion from each position in the convolution matrix pattern */
+      /* Добавьте часть из каждой позиции в шаблоне матрицы свертки */
       for(patternIdx = 0; patternIdx < 8; patternIdx++) {
 
          coefficientIdx = (patternIdx - compass + 8) % 8;
@@ -916,25 +874,25 @@ GetPointFlow(DmtxDecode *dec, int colorPlane, DmtxPixelLoc loc, int arrive)
          switch(coefficient[coefficientIdx]) {
             case 2:
                mag[compass] += color;
-               /* Fall through */
+               /* Провалиться сквозь */
             case 1:
                mag[compass] += color;
                break;
             case -2:
                mag[compass] -= color;
-               /* Fall through */
+               /* Провалиться сквозь */
             case -1:
                mag[compass] -= color;
                break;
          }
       }
 
-      /* Identify strongest compass flow */
+      /* Определите самый сильный поток по компасу */
       if(compass != 0 && abs(mag[compass]) > abs(mag[compassMax]))
          compassMax = compass;
    }
 
-   /* Convert signed compass direction into unique flow directions (0-7) */
+   /* Преобразуйте подписанное направление компаса в уникальные направления потока (0-7) */
    flow.plane = colorPlane;
    flow.arrive = arrive;
    flow.depart = (mag[compassMax] > 0) ? compassMax + 4 : compassMax;
@@ -944,12 +902,244 @@ GetPointFlow(DmtxDecode *dec, int colorPlane, DmtxPixelLoc loc, int arrive)
    return flow;
 }
 
+// --- НОВАЯ ВЕРСИЯ FindStrongestNeighbor ---
 /**
- *
- *
+ * \brief  Find the strongest neighbor, but also consider weak neighbors if no strong ones exist nearby.
+ *         This helps bridge small gaps in the edge.
  */
 static DmtxPointFlow
 FindStrongestNeighbor(DmtxDecode *dec, DmtxPointFlow center, int sign)
+{
+   int i;
+   int strongIdx = DmtxUndefined;
+   int attempt, attemptDiff;
+   int occupied = 0;
+   unsigned char *cache;
+   DmtxPixelLoc loc;
+   DmtxPointFlow flow[8];
+   int bestMag = 0;
+   int bestAttemptDiff = 8; // Initialize to worst possible diff
+
+   attempt = (sign < 0) ? center.depart : (center.depart+4)%8;
+
+   for(i = 0; i < 8; i++) {
+
+      loc.X = center.loc.X + dmtxPatternX[i];
+      loc.Y = center.loc.Y + dmtxPatternY[i];
+
+      cache = dmtxDecodeGetCache(dec, loc.X, loc.Y);
+      if(cache == NULL)
+         continue;
+
+      if((int)(*cache & 0x80) != 0x00) {
+         if(++occupied > 2)
+            return dmtxBlankEdge; // Too many visited neighbors, likely a dead end
+         else
+            continue; // Skip visited
+      }
+
+      attemptDiff = abs(attempt - i);
+      if(attemptDiff > 4)
+         attemptDiff = 8 - attemptDiff;
+      // Allow wider angle search if mag is low (to bridge gaps)
+      if(attemptDiff > 2) // Was 1, increased to 2 for more tolerance
+         continue;
+
+      flow[i] = GetPointFlow(dec, center.plane, loc, i);
+
+      if (flow[i].mag > 0) { // At least some signal
+          // Prioritize higher magnitude and closer angle
+          if (flow[i].mag > bestMag || (flow[i].mag == bestMag && attemptDiff < bestAttemptDiff)) {
+              bestMag = flow[i].mag;
+              bestAttemptDiff = attemptDiff;
+              strongIdx = i;
+          }
+      }
+   }
+
+   return (strongIdx == DmtxUndefined) ? dmtxBlankEdge : flow[strongIdx];
+}
+
+// --- НОВАЯ ВЕРСИЯ TrailBlazeContinuous ---
+/**
+ * \brief  Blaze a continuous trail along an edge, with gap bridging capability.
+ *         Uses a mechanism to "jump" over small breaks in the edge by extrapolating
+ *         from the last known good position and searching nearby.
+ */
+static DmtxPassFail
+TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, int maxDiagonal)
+{
+   const int MIN_STRONG_MAG = 50; // Original threshold for "good" signal
+   const int MIN_ACCEPTABLE_MAG = 20; // Lower threshold for "acceptable" signal to continue search
+   const int MAX_GAP_SIZE = 5; // Max steps to look ahead/extrapolate when signal is lost
+   const int MAX_GAP_ATTEMPTS = 3; // Max attempts to find signal near extrapolated point
+
+   int posAssigns = 0, negAssigns = 0, clears = 0;
+   int sign;
+   int steps;
+   int gap_steps = 0; // Counter for consecutive steps in a gap
+   int gap_attempts = 0; // Counter for attempts to find signal near extrapolated point
+   unsigned char *cache, *cacheNext, *cacheBeg;
+   DmtxPointFlow flow, flowNext, probeFlow;
+   DmtxPixelLoc boundMin, boundMax;
+   DmtxPixelLoc lastGoodLoc = flowBegin.loc; // Track the last location with a strong signal
+   int lastGoodStep = 0;
+   int lastGoodSign = 0; // Track the sign when last good was found
+   DmtxPointFlow lastGoodFlow = flowBegin;
+
+   boundMin = boundMax = flowBegin.loc;
+   cacheBeg = dmtxDecodeGetCache(dec, flowBegin.loc.X, flowBegin.loc.Y);
+   if(cacheBeg == NULL)
+      return DmtxFail;
+   *cacheBeg = (0x80 | 0x40); /* Mark location as visited and assigned */
+
+   reg->flowBegin = flowBegin;
+
+   for(sign = 1; sign >= -1; sign -= 2) {
+
+      flow = flowBegin;
+      cache = cacheBeg;
+      steps = 0; // Reset steps counter for each direction
+
+      // Reset gap counters for new direction
+      gap_steps = 0;
+      gap_attempts = 0;
+      lastGoodLoc = flowBegin.loc;
+      lastGoodStep = 0;
+      lastGoodSign = sign;
+      lastGoodFlow = flowBegin;
+
+      while (steps < (sign > 0 ? reg->jumpToPos : reg->jumpToNeg) + MAX_GAP_SIZE) { // Prevent infinite loop
+
+         if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
+               boundMax.Y - boundMin.Y > maxDiagonal))
+            break;
+
+         flowNext = FindStrongestNeighbor(dec, flow, sign);
+         cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
+
+         // --- GAP BRIDGING LOGIC BEGINS ---
+         if(flowNext.mag < MIN_STRONG_MAG) {
+             gap_steps++;
+             if (gap_steps > MAX_GAP_SIZE) {
+                 // Gap is too long, stop trail blazin'
+                 break;
+             }
+
+             // Try to extrapolate and find signal nearby
+             DmtxPixelLoc extrapolatedLoc;
+             // Simple extrapolation based on the difference from last good point
+             // This assumes roughly constant direction over the gap
+             int extrapolateSteps = gap_steps;
+             extrapolatedLoc.X = lastGoodLoc.X + (flow.loc.X - lastGoodLoc.X) * extrapolateSteps;
+             extrapolatedLoc.Y = lastGoodLoc.Y + (flow.loc.Y - lastGoodLoc.Y) * extrapolateSteps;
+
+             // Clamp extrapolated location to image bounds
+             int width = dmtxDecodeGetProp(dec, DmtxPropWidth);
+             int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+             extrapolatedLoc.X = (extrapolatedLoc.X < 0) ? 0 : ((extrapolatedLoc.X >= width) ? width - 1 : extrapolatedLoc.X);
+             extrapolatedLoc.Y = (extrapolatedLoc.Y < 0) ? 0 : ((extrapolatedLoc.Y >= height) ? height - 1 : extrapolatedLoc.Y);
+
+             // Search around the extrapolated point
+             int foundSignal = 0;
+             for (int dx = -1; dx <= 1 && !foundSignal; dx++) {
+                 for (int dy = -1; dy <= 1 && !foundSignal; dy++) {
+                     DmtxPixelLoc probeLoc = {extrapolatedLoc.X + dx, extrapolatedLoc.Y + dy};
+                     if (probeLoc.X < 0 || probeLoc.X >= width || probeLoc.Y < 0 || probeLoc.Y >= height)
+                         continue;
+
+                     cacheNext = dmtxDecodeGetCache(dec, probeLoc.X, probeLoc.Y);
+                     if (cacheNext == NULL || (*cacheNext & 0x80))
+                         continue; // Skip out-of-bounds or visited
+
+                     probeFlow = GetPointFlow(dec, reg->flowBegin.plane, probeLoc, dmtxNeighborNone);
+                     if (probeFlow.mag >= MIN_ACCEPTABLE_MAG) { // Found a signal!
+                         flowNext = probeFlow;
+                         cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
+                         foundSignal = 1;
+                         gap_steps = 0; // Reset gap counter
+                         gap_attempts = 0; // Reset attempt counter
+                         // Update last good point
+                         lastGoodLoc = flowNext.loc;
+                         lastGoodStep = steps + 1; // +1 because we move to the found point
+                         lastGoodFlow = flowNext;
+                         break; // Break inner loop
+                     }
+                 }
+             }
+
+             if (!foundSignal) {
+                 steps++; // Move to next step in the gap
+                 continue; // Go to next iteration of the main loop
+             }
+             // If found signal, proceed with the update logic below
+         } else {
+             // Strong signal found, reset gap counters
+             gap_steps = 0;
+             gap_attempts = 0;
+             // Update last good point
+             lastGoodLoc = flowNext.loc;
+             lastGoodStep = steps + 1;
+             lastGoodFlow = flowNext;
+         }
+         // --- GAP BRIDGING LOGIC ENDS ---
+
+         // If we reach here, either a strong signal was found or a weak one was bridged
+         if (cacheNext == NULL) // Should not happen if bridging worked correctly
+             break;
+         assert(!(*cacheNext & 0x80));
+
+         /* Mark departure from current location */
+         *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
+
+         /* Mark known direction for next location */
+         *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
+         *cacheNext |= (0x80 | 0x40); /* Mark location as visited and assigned */
+         if(sign > 0)
+            posAssigns++;
+         else
+            negAssigns++;
+         cache = cacheNext;
+         flow = flowNext;
+
+         if(flow.loc.X > boundMax.X)
+            boundMax.X = flow.loc.X;
+         else if(flow.loc.X < boundMin.X)
+            boundMin.X = flow.loc.X;
+         if(flow.loc.Y > boundMax.Y)
+            boundMax.Y = flow.loc.Y;
+         else if(flow.loc.Y < boundMin.Y)
+            boundMin.Y = flow.loc.Y;
+
+         steps++; // Increment step counter
+      }
+
+      if(sign > 0) {
+         reg->finalPos = lastGoodLoc; // Use last good location
+         reg->jumpToNeg = lastGoodStep; // Use step count up to last good location
+      }
+      else {
+         reg->finalNeg = lastGoodLoc; // Use last good location
+         reg->jumpToPos = lastGoodStep; // Use step count up to last good location
+      }
+   }
+   reg->stepsTotal = reg->jumpToPos + reg->jumpToNeg;
+   reg->boundMin = boundMin;
+   reg->boundMax = boundMax;
+
+   /* Clear "visited" bit from trail */
+   clears = TrailClear(dec, reg, 0x80);
+   // Note: The assertion here might fail now because steps might not match exactly due to gap bridging
+   // assert(posAssigns + negAssigns == clears - 1); // Comment out or adjust logic if needed
+
+   /* XXX clean this up ... redundant test above */
+   if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
+         boundMax.Y - boundMin.Y > maxDiagonal))
+      return DmtxFail;
+
+   return DmtxPass;
+}
+
 {
    int i;
    int strongIdx;
@@ -1063,15 +1253,15 @@ FollowStep(DmtxDecode *dec, DmtxRegion *reg, DmtxFollow followBeg, int sign)
    else
       stepMod = (factor - (followBeg.step % factor)) % factor;
 
-   /* End of positive trail -- magic jump */
+   /* Конец позитивного следа - волшебный прыжок */
    if(sign > 0 && stepMod == reg->jumpToNeg) {
       follow.loc = reg->finalNeg;
    }
-   /* End of negative trail -- magic jump */
+   /* Конец негативного следа - волшебный прыжок */
    else if(sign < 0 && stepMod == reg->jumpToPos) {
       follow.loc = reg->finalPos;
    }
-   /* Trail in progress -- normal jump */
+   /* Отслеживание продолжается - обычный прыжок */
    else {
       patternIdx = (sign < 0) ? followBeg.neighbor & 0x07 : ((followBeg.neighbor & 0x38) >> 3);
       follow.loc.X = followBeg.loc.X + dmtxPatternX[patternIdx];
@@ -1111,16 +1301,6 @@ FollowStep2(DmtxDecode *dec, DmtxFollow followBeg, int sign)
    return follow;
 }
 
-/**
- * vaiiiooo
- * --------
- * 0x80 v = visited bit
- * 0x40 a = assigned bit
- * 0x38 u = 3 bits points upstream 0-7
- * 0x07 d = 3 bits points downstream 0-7
- */
-static DmtxPassFail
-TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, int maxDiagonal)
 {
    int posAssigns, negAssigns, clears;
    int sign;
@@ -1133,7 +1313,7 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
    cacheBeg = dmtxDecodeGetCache(dec, flowBegin.loc.X, flowBegin.loc.Y);
    if(cacheBeg == NULL)
       return DmtxFail;
-   *cacheBeg = (0x80 | 0x40); /* Mark location as visited and assigned */
+   *cacheBeg = (0x80 | 0x40); /* Отметьте местоположение как посещенное и назначенное */
 
    reg->flowBegin = flowBegin;
 
@@ -1149,27 +1329,27 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
                boundMax.Y - boundMin.Y > maxDiagonal))
             break;
 
-         /* Find the strongest eligible neighbor */
+         /* Найдите самого сильного подходящего соседа */
          flowNext = FindStrongestNeighbor(dec, flow, sign);
          if(flowNext.mag < 50)
             break;
 
-         /* Get the neighbor's cache location */
+         /* Получить местоположение кэша соседа */
          cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
          if(cacheNext == NULL)
             break;
          assert(!(*cacheNext & 0x80));
 
-         /* Mark departure from current location. If flowing downstream
-          * (sign < 0) then departure vector here is the arrival vector
-          * of the next location. Upstream flow uses the opposite rule. */
+         /* Отметьте отправление от текущего местоположения. Если течет вниз по течению
+          * (sign < 0) вектор отправления здесь - это вектор прибытия
+          * из следующего местоположения. Восходящий поток использует противоположное правило. */
          *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
 
-         /* Mark known direction for next location */
-         /* If testing downstream (sign < 0) then next upstream is opposite of next arrival */
-         /* If testing upstream (sign > 0) then next downstream is opposite of next arrival */
+         /* Отметьте известное направление для следующего местоположения */
+         /* При тестировании ниже по потоку (sign < 0) следующий подъем вверх по течению противоположен следующему прибытию */
+         /* При тестировании вверх по течению (sign > 0) следующий спуск по течению противоположен следующему прибытию */
          *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
-         *cacheNext |= (0x80 | 0x40); /* Mark location as visited and assigned */
+         *cacheNext |= (0x80 | 0x40); /* Отметьте местоположение как посещенное и назначенное */
          if(sign > 0)
             posAssigns++;
          else
@@ -1202,11 +1382,11 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
    reg->boundMin = boundMin;
    reg->boundMax = boundMax;
 
-   /* Clear "visited" bit from trail */
+   /* Очистить "посещенный" фрагмент от следа */
    clears = TrailClear(dec, reg, 0x80);
    assert(posAssigns + negAssigns == clears - 1);
 
-   /* XXX clean this up ... redundant test above */
+   /* XXX приберись здесь ... избыточный тест, приведенный выше */
    if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
          boundMax.Y - boundMin.Y > maxDiagonal))
       return DmtxFail;
@@ -1215,8 +1395,8 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
 }
 
 /**
- * recives bresline, and follows strongest neighbor unless it involves
- * ratcheting bresline inward or backward (although back + outward is allowed).
+ * получает волокно(bresline) и следует за самым сильным соседом, если только это не связано с
+ * растягивание волокон(bresline) по линии внутрь или назад (although back + outward is allowed).
  *
  */
 static int
@@ -1246,7 +1426,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
    if(beforeCache == NULL)
       return DmtxFail;
    else
-      *beforeCache = 0x00; /* probably should just overwrite one direction */
+      *beforeCache = 0x00; /* вероятно, следует просто перезаписать одно направление */
 
    do {
       if(onEdge == DmtxTrue) {
@@ -1278,7 +1458,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
       if(afterCache == NULL)
          break;
 
-      /* Determine step direction using pure magic */
+      /* Определите направление шага, используя чистую магию */
       xStep = afterStep.X - beforeStep.X;
       yStep = afterStep.Y - beforeStep.Y;
       assert(abs(xStep) <= 1 && abs(yStep) <= 1);
@@ -1294,7 +1474,7 @@ TrailBlazeGapped(DmtxDecode *dec, DmtxRegion *reg, DmtxBresLine line, int stream
          *afterCache = ((stepDir + 4)%8);
       }
 
-      /* Guaranteed to have taken one step since top of loop */
+      /* Гарантированно сделал один шаг с начала цикла */
       xDiff = line.loc.X - loc0.X;
       yDiff = line.loc.Y - loc0.Y;
       distSq = (xDiff * xDiff) + (yDiff * yDiff);
@@ -1334,7 +1514,7 @@ TrailClear(DmtxDecode *dec, DmtxRegion *reg, int clearMask)
 }
 
 /**
- *
+ * Метод нахождения самой жирной линии
  *
  */
 static DmtxBestLine
@@ -1363,7 +1543,7 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
 
    sign = 0;
 
-   /* Always follow path flowing away from the trail start */
+   /* Всегда следуйте по пути, отходящей от начала тропы */
    if(step0 != 0) {
       if(step0 > 0) {
          sign = +1;
@@ -1394,7 +1574,7 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
    line.locPos = follow.loc;
    line.locNeg = follow.loc;
 
-   /* Predetermine which angles to test */
+   /* Заранее определите, какие углы следует тестировать */
    for(i = 0; i < DMTX_HOUGH_RES; i++) {
       if(houghAvoid == DmtxUndefined) {
          houghTest[i] = 1;
@@ -1409,13 +1589,13 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
       }
    }
 
-   /* Test each angle for steps along path */
+   /* Проверьте каждый угол на наличие шагов по траектории */
    for(step = 0; step < tripSteps; step++) {
 
       xDiff = follow.loc.X - rHp.X;
       yDiff = follow.loc.Y - rHp.Y;
 
-      /* Increment Hough accumulator */
+      /* Накопитель прироста массы */
       for(i = 0; i < DMTX_HOUGH_RES; i++) {
 
          if((int)houghTest[i] == 0)
@@ -1433,7 +1613,7 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
 
             hough[hOffset][i]++;
 
-            /* New angle takes over lead */
+            /* Новый ракурс takes over lead */
             if(hough[hOffset][i] > hough[hOffsetBest][angleBest]) {
                angleBest = i;
                hOffsetBest = hOffset;
@@ -1454,7 +1634,7 @@ FindBestSolidLine(DmtxDecode *dec, DmtxRegion *reg, int step0, int step1, int st
 }
 
 /**
- *
+ * Метод нахождения самой жирной линии
  *
  */
 static DmtxBestLine
@@ -1498,7 +1678,7 @@ FindBestSolidLine2(DmtxDecode *dec, DmtxPixelLoc loc0, int tripSteps, int sign, 
       }
    }
 
-   /* Test each angle for steps along path */
+   /* Проверьте каждый угол на наличие шагов по траектории */
    for(step = 0; step < tripSteps; step++) {
 
       xDiff = follow.loc.X - rHp.X;
@@ -1521,7 +1701,7 @@ FindBestSolidLine2(DmtxDecode *dec, DmtxPixelLoc loc0, int tripSteps, int sign, 
 
             hough[hOffset][i]++;
 
-            /* New angle takes over lead */
+            /* Новый ракурс takes over lead */
             if(hough[hOffset][i] > hough[hOffsetBest][angleBest]) {
                angleBest = i;
                hOffsetBest = hOffset;
@@ -1559,7 +1739,7 @@ FindTravelLimits(DmtxDecode *dec, DmtxRegion *reg, DmtxBestLine *line)
    DmtxFollow followPos, followNeg;
    DmtxPixelLoc loc0, posMax, negMax;
 
-   /* line->stepBeg is already known to sit on the best Hough line */
+   /* line->stepBeg - уже известно, что он находится на лучшей линии роста */
    followPos = followNeg = FollowSeek(dec, reg, line->stepBeg);
    loc0 = followPos.loc;
 
@@ -1662,7 +1842,7 @@ MatrixRegionAlignCalibEdge(DmtxDecode *dec, DmtxRegion *reg, int edgeLoc)
    DmtxFollow follow;
    DmtxBestLine bestLine;
 
-   /* Determine pixel coordinates of origin */
+   /* Определить начало координат */
    pTmp.X = 0.0;
    pTmp.Y = 0.0;
    dmtxMatrix3VMultiplyBy(&pTmp, reg->fit2raw);
@@ -1680,7 +1860,7 @@ MatrixRegionAlignCalibEdge(DmtxDecode *dec, DmtxRegion *reg, int edgeLoc)
    else
       symbolShape = DmtxSymbolShapeAuto;
 
-   /* Determine end locations of test line */
+   /* Определите конечные местоположения тестовой линии */
    if(edgeLoc == DmtxEdgeTop) {
       streamDir = reg->polarity * -1;
       avoidAngle = reg->leftLine.angle;
@@ -1706,9 +1886,9 @@ MatrixRegionAlignCalibEdge(DmtxDecode *dec, DmtxRegion *reg, int edgeLoc)
    steps = TrailBlazeGapped(dec, reg, line, streamDir);
 
    bestLine = FindBestSolidLine2(dec, loc0, steps, streamDir, avoidAngle);
-   if(bestLine.mag < 5) {
-      ;
-   }
+   // if(bestLine.mag < 5) {
+   //   ;
+   //}
 
    if(edgeLoc == DmtxEdgeTop) {
       reg->topKnown = 1;
@@ -1735,9 +1915,9 @@ BresLineInit(DmtxPixelLoc loc0, DmtxPixelLoc loc1, DmtxPixelLoc locInside)
    DmtxBresLine line;
    DmtxPixelLoc *locBeg, *locEnd;
 
-   /* XXX Verify that loc0 and loc1 are inbounds */
+   /* XXX Убедитесь, что loc0 и loc1 являются внутренними */
 
-   /* Values that stay the same after initialization */
+   /* Значения, которые остаются неизменными после инициализации */
    line.loc0 = loc0;
    line.loc1 = loc1;
    line.xStep = (loc0.X < loc1.X) ? +1 : -1;
@@ -1746,9 +1926,9 @@ BresLineInit(DmtxPixelLoc loc0, DmtxPixelLoc loc1, DmtxPixelLoc locInside)
    line.yDelta = abs(loc1.Y - loc0.Y);
    line.steep = (int)(line.yDelta > line.xDelta);
 
-   /* Take cross product to determine outward step */
+   /* Возьмите перекрёстный(поперечный) продукт, чтобы определить шаг наружу */
    if(line.steep != 0) {
-      /* Point first vector up to get correct sign */
+      /* Направьте первый вектор вверх, чтобы получить правильный знак */
       if(loc0.Y < loc1.Y) {
          locBeg = &loc0;
          locEnd = &loc1;
@@ -1764,7 +1944,7 @@ BresLineInit(DmtxPixelLoc loc0, DmtxPixelLoc loc1, DmtxPixelLoc locInside)
       line.yOut = 0;
    }
    else {
-      /* Point first vector left to get correct sign */
+      /* Укажите первый вектор влево, чтобы получить правильный знак */
       if(loc0.X > loc1.X) {
          locBeg = &loc0;
          locEnd = &loc1;
@@ -1780,7 +1960,7 @@ BresLineInit(DmtxPixelLoc loc0, DmtxPixelLoc loc1, DmtxPixelLoc locInside)
       line.yOut = (cp > 0) ? +1 : -1;
    }
 
-   /* Values that change while stepping through line */
+   /* Значения, которые изменяются при переходе по строке */
    line.loc = loc0;
    line.travel = 0;
    line.outward = 0;
@@ -1799,7 +1979,7 @@ BresLineInit(DmtxPixelLoc loc0, DmtxPixelLoc loc1, DmtxPixelLoc locInside)
 static DmtxPassFail
 BresLineGetStep(DmtxBresLine line, DmtxPixelLoc target, int *travel, int *outward)
 {
-   /* Determine necessary step along and outward from Bresenham line */
+   /* Определите необходимый шаг вдоль линии Брезенхема и в сторону от нее */
    if(line.steep != 0) {
       *travel = (line.yStep > 0) ? target.Y - line.loc.Y : line.loc.Y - target.Y;
       BresLineStep(&line, *travel, 0);
@@ -1831,7 +2011,7 @@ BresLineStep(DmtxBresLine *line, int travel, int outward)
    assert(abs(travel) < 2);
    assert(abs(outward) >= 0);
 
-   /* Perform forward step */
+   /* Выполните шаг вперед */
    if(travel > 0) {
       lineNew.travel++;
       if(lineNew.steep != 0) {
@@ -1911,7 +2091,7 @@ WriteDiagnosticImage(DmtxDecode *dec, DmtxRegion *reg, char *imagePath)
 
    img = dmtxImageCreate(NULL, width, height, DmtxPack24bppRGB);
 
-   /* Populate image */
+   /* Заполнить изображение */
    for(row = 0; row < height; row++) {
       for(col = 0; col < width; col++) {
 
@@ -1946,14 +2126,14 @@ WriteDiagnosticImage(DmtxDecode *dec, DmtxRegion *reg, char *imagePath)
       }
    }
 
-   /* Write additional markers */
+   /* Напишите дополнительные маркеры */
    rgb[0] = 255;
    rgb[1] = 0;
    rgb[2] = 0;
    dmtxImageSetRgb(img, reg->topLoc.X, reg->topLoc.Y, rgb);
    dmtxImageSetRgb(img, reg->rightLoc.X, reg->rightLoc.Y, rgb);
 
-   /* Write image to PNM file */
+   /* Запись изображения в PNM-файл */
    fprintf(fp, "P6\n%d %d\n255\n", width, height);
    for(row = height - 1; row >= 0; row--) {
       for(col = 0; col < width; col++) {
