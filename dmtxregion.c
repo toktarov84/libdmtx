@@ -910,17 +910,17 @@ static DmtxPointFlow
 FindStrongestNeighbor(DmtxDecode *dec, DmtxPointFlow center, int sign)
 {
    int i;
-   int strongIdx = DmtxUndefined;
+   int strongIdx;
    int attempt, attemptDiff;
-   int occupied = 0;
+   int occupied;
    unsigned char *cache;
    DmtxPixelLoc loc;
    DmtxPointFlow flow[8];
-   int bestMag = 0;
-   int bestAttemptDiff = 8; // Initialize to worst possible diff
 
    attempt = (sign < 0) ? center.depart : (center.depart+4)%8;
 
+   occupied = 0;
+   strongIdx = DmtxUndefined;
    for(i = 0; i < 8; i++) {
 
       loc.X = center.loc.X + dmtxPatternX[i];
@@ -932,27 +932,22 @@ FindStrongestNeighbor(DmtxDecode *dec, DmtxPointFlow center, int sign)
 
       if((int)(*cache & 0x80) != 0x00) {
          if(++occupied > 2)
-            return dmtxBlankEdge; // Too many visited neighbors, likely a dead end
+            return dmtxBlankEdge;
          else
-            continue; // Skip visited
+            continue;
       }
 
       attemptDiff = abs(attempt - i);
       if(attemptDiff > 4)
          attemptDiff = 8 - attemptDiff;
-      // Allow wider angle search if mag is low (to bridge gaps)
-      if(attemptDiff > 2) // Was 1, increased to 2 for more tolerance
+      if(attemptDiff > 2)
          continue;
 
       flow[i] = GetPointFlow(dec, center.plane, loc, i);
 
-      if (flow[i].mag > 0) { // At least some signal
-          // Prioritize higher magnitude and closer angle
-          if (flow[i].mag > bestMag || (flow[i].mag == bestMag && attemptDiff < bestAttemptDiff)) {
-              bestMag = flow[i].mag;
-              bestAttemptDiff = attemptDiff;
-              strongIdx = i;
-          }
+      if(strongIdx == DmtxUndefined || flow[i].mag > flow[strongIdx].mag ||
+            (flow[i].mag == flow[strongIdx].mag && ((i & 0x01) != 0))) {
+         strongIdx = i;
       }
    }
 
@@ -1108,48 +1103,59 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
 
       for(steps = 0; ; steps++) {
 
-         if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
-               boundMax.Y - boundMin.Y > maxDiagonal))
-            break;
+         int gap_counter = 0;
+         int max_gap_size = 3;
+         DmtxPointFlow last_strong_flow = flow;
+         DmtxFollow last_strong_follow = {cache, *cache, steps, flow.loc};
 
-         /* Найдите самого сильного подходящего соседа */
-         flowNext = FindStrongestNeighbor(dec, flow, sign);
-         if(flowNext.mag < 50)
-            break;
+         for(steps = 0; ; steps++) {
 
-         /* Получить местоположение кэша соседа */
-         cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
-         if(cacheNext == NULL)
-            break;
-         assert(!(*cacheNext & 0x80));
+             if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
+                   boundMax.Y - boundMin.Y > maxDiagonal))
+                break;
 
-         /* Отметьте отправление от текущего местоположения. Если течет вниз по течению
-          * (sign < 0) вектор отправления здесь - это вектор прибытия
-          * из следующего местоположения. Восходящий поток использует противоположное правило. */
-         *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
+             flowNext = FindStrongestNeighbor(dec, flow, sign);
+             if (flowNext.mag >= 50) {
+                 gap_counter = 0;
+                 last_strong_flow = flowNext;
+             } else {
+                 gap_counter++;
+                 if (gap_counter > max_gap_size) {
+                     break;
+                 }
+             }
 
-         /* Отметьте известное направление для следующего местоположения */
-         /* При тестировании ниже по потоку (sign < 0) следующий подъем вверх по течению противоположен следующему прибытию */
-         /* При тестировании вверх по течению (sign > 0) следующий спуск по течению противоположен следующему прибытию */
-         *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
-         *cacheNext |= (0x80 | 0x40); /* Отметьте местоположение как посещенное и назначенное */
-         if(sign > 0)
-            posAssigns++;
-         else
-            negAssigns++;
-         cache = cacheNext;
-         flow = flowNext;
+             if (flowNext.mag < 50 && gap_counter > max_gap_size) {
+                 break;
+             }
 
-         if(flow.loc.X > boundMax.X)
-            boundMax.X = flow.loc.X;
-         else if(flow.loc.X < boundMin.X)
-            boundMin.X = flow.loc.X;
-         if(flow.loc.Y > boundMax.Y)
-            boundMax.Y = flow.loc.Y;
-         else if(flow.loc.Y < boundMin.Y)
-            boundMin.Y = flow.loc.Y;
+             cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
+             if (cacheNext == NULL)
+                break;
+             assert(!(*cacheNext & 0x80));
 
-/*       CALLBACK_POINT_PLOT(flow.loc, (sign > 0) ? 2 : 3, 1, 2); */
+             *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
+
+             *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
+             *cacheNext |= (0x80 | 0x40);
+             if(sign > 0)
+                posAssigns++;
+             else
+                negAssigns++;
+             cache = cacheNext;
+             flow = flowNext;
+
+             if(flow.loc.X > boundMax.X)
+                boundMax.X = flow.loc.X;
+             else if(flow.loc.X < boundMin.X)
+                boundMin.X = flow.loc.X;
+             if(flow.loc.Y > boundMax.Y)
+                boundMax.Y = flow.loc.Y;
+             else if(flow.loc.Y < boundMin.Y)
+                boundMin.Y = flow.loc.Y;
+
+             /* CALLBACK_POINT_PLOT(flow.loc, (sign > 0) ? 2 : 3, 1, 2); */
+         }
       }
 
       if(sign > 0) {
