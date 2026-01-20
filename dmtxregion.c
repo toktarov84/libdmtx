@@ -1103,59 +1103,48 @@ TrailBlazeContinuous(DmtxDecode *dec, DmtxRegion *reg, DmtxPointFlow flowBegin, 
 
       for(steps = 0; ; steps++) {
 
-         int gap_counter = 0;
-         int max_gap_size = 3;
-         DmtxPointFlow last_strong_flow = flow;
-         DmtxFollow last_strong_follow = {cache, *cache, steps, flow.loc};
+         if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
+               boundMax.Y - boundMin.Y > maxDiagonal))
+            break;
 
-         for(steps = 0; ; steps++) {
+         /* Найдите самого сильного подходящего соседа */
+         flowNext = FindStrongestNeighbor(dec, flow, sign);
+         if(flowNext.mag < 30)
+            break;
 
-             if(maxDiagonal != DmtxUndefined && (boundMax.X - boundMin.X > maxDiagonal ||
-                   boundMax.Y - boundMin.Y > maxDiagonal))
-                break;
+         /* Получить местоположение кэша соседа */
+         cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
+         if(cacheNext == NULL)
+            break;
+         assert(!(*cacheNext & 0x80));
 
-             flowNext = FindStrongestNeighbor(dec, flow, sign);
-             if (flowNext.mag >= 50) {
-                 gap_counter = 0;
-                 last_strong_flow = flowNext;
-             } else {
-                 gap_counter++;
-                 if (gap_counter > max_gap_size) {
-                     break;
-                 }
-             }
+         /* Отметьте отправление от текущего местоположения. Если течет вниз по течению
+          * (sign < 0) вектор отправления здесь - это вектор прибытия
+          * из следующего местоположения. Восходящий поток использует противоположное правило. */
+         *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
 
-             if (flowNext.mag < 50 && gap_counter > max_gap_size) {
-                 break;
-             }
+         /* Отметьте известное направление для следующего местоположения */
+         /* При тестировании ниже по потоку (sign < 0) следующий подъем вверх по течению противоположен следующему прибытию */
+         /* При тестировании вверх по течению (sign > 0) следующий спуск по течению противоположен следующему прибытию */
+         *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
+         *cacheNext |= (0x80 | 0x40); /* Отметьте местоположение как посещенное и назначенное */
+         if(sign > 0)
+            posAssigns++;
+         else
+            negAssigns++;
+         cache = cacheNext;
+         flow = flowNext;
 
-             cacheNext = dmtxDecodeGetCache(dec, flowNext.loc.X, flowNext.loc.Y);
-             if (cacheNext == NULL)
-                break;
-             assert(!(*cacheNext & 0x80));
+         if(flow.loc.X > boundMax.X)
+            boundMax.X = flow.loc.X;
+         else if(flow.loc.X < boundMin.X)
+            boundMin.X = flow.loc.X;
+         if(flow.loc.Y > boundMax.Y)
+            boundMax.Y = flow.loc.Y;
+         else if(flow.loc.Y < boundMin.Y)
+            boundMin.Y = flow.loc.Y;
 
-             *cache |= (sign < 0) ? flowNext.arrive : flowNext.arrive << 3;
-
-             *cacheNext = (sign < 0) ? (((flowNext.arrive + 4)%8) << 3) : ((flowNext.arrive + 4)%8);
-             *cacheNext |= (0x80 | 0x40);
-             if(sign > 0)
-                posAssigns++;
-             else
-                negAssigns++;
-             cache = cacheNext;
-             flow = flowNext;
-
-             if(flow.loc.X > boundMax.X)
-                boundMax.X = flow.loc.X;
-             else if(flow.loc.X < boundMin.X)
-                boundMin.X = flow.loc.X;
-             if(flow.loc.Y > boundMax.Y)
-                boundMax.Y = flow.loc.Y;
-             else if(flow.loc.Y < boundMin.Y)
-                boundMin.Y = flow.loc.Y;
-
-             /* CALLBACK_POINT_PLOT(flow.loc, (sign > 0) ? 2 : 3, 1, 2); */
-         }
+/*       CALLBACK_POINT_PLOT(flow.loc, (sign > 0) ? 2 : 3, 1, 2); */
       }
 
       if(sign > 0) {
